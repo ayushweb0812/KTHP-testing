@@ -1,0 +1,307 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-maroon: var(--maroon);
+  --color-maroon-deep: var(--maroon-deep);
+  --color-emerald: var(--emerald);
+  --color-parchment: var(--parchment);
+  --color-ink: var(--ink);
+
+  --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: var(--font-cormorant), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+/* ============================================
+   KILA — The Heritage Palace
+   Royal heritage design system
+   Maroon, deep green, antique gold, ivory parchment
+   ============================================ */
+
+:root {
+  --radius: 0.25rem;
+
+  /* Parchment ivory base */
+  --background: oklch(0.965 0.018 80);
+  --foreground: oklch(0.22 0.04 30);
+
+  --card: oklch(0.985 0.012 85);
+  --card-foreground: oklch(0.22 0.04 30);
+  --popover: oklch(0.985 0.012 85);
+  --popover-foreground: oklch(0.22 0.04 30);
+
+  /* Heraldic navy as primary */
+  --primary: oklch(0.30 0.10 255);
+  --primary-foreground: oklch(0.97 0.02 85);
+
+  --secondary: oklch(0.93 0.025 80);
+  --secondary-foreground: oklch(0.28 0.08 28);
+
+  --muted: oklch(0.93 0.018 80);
+  --muted-foreground: oklch(0.45 0.04 40);
+
+  --accent: oklch(0.72 0.13 75);          /* antique gold */
+  --accent-foreground: oklch(0.22 0.04 30);
+
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.98 0.003 85);
+
+  --border: oklch(0.85 0.03 75);
+  --input: oklch(0.88 0.025 75);
+  --ring: oklch(0.55 0.12 30);
+
+  /* Heritage palette */
+  --gold: oklch(0.72 0.13 75);
+  --gold-soft: oklch(0.82 0.09 80);
+  --maroon: oklch(0.30 0.10 255);        /* heraldic navy (crest blue) */
+  --maroon-deep: oklch(0.20 0.09 258);   /* deep midnight navy */
+  --emerald: oklch(0.36 0.07 155);
+  --parchment: oklch(0.965 0.018 80);
+  --ink: oklch(0.16 0.05 258);
+
+  /* Gradients & shadows */
+  --gradient-royal: linear-gradient(135deg, var(--maroon-deep) 0%, var(--maroon) 60%, oklch(0.36 0.10 250) 100%);
+  --gradient-gold: linear-gradient(135deg, oklch(0.78 0.12 80) 0%, var(--gold) 50%, oklch(0.62 0.14 65) 100%);
+  --gradient-parchment: linear-gradient(180deg, oklch(0.97 0.02 85) 0%, oklch(0.94 0.03 80) 100%);
+  --gradient-vignette: radial-gradient(ellipse at center, transparent 40%, oklch(0.10 0.06 258 / 0.55) 100%);
+
+  --shadow-royal: 0 30px 60px -25px oklch(0.20 0.09 258 / 0.45), 0 10px 30px -15px oklch(0.20 0.09 258 / 0.3);
+  --shadow-gold: 0 0 0 1px oklch(0.72 0.13 75 / 0.4), 0 20px 40px -20px oklch(0.72 0.13 75 / 0.35);
+  --shadow-soft: 0 10px 40px -15px oklch(0.26 0.11 24 / 0.18);
+
+  --transition-elegant: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark {
+  --background: oklch(0.16 0.025 30);
+  --foreground: oklch(0.95 0.02 80);
+  --card: oklch(0.2 0.03 28);
+  --card-foreground: oklch(0.95 0.02 80);
+  --popover: oklch(0.2 0.03 28);
+  --popover-foreground: oklch(0.95 0.02 80);
+  --primary: oklch(0.78 0.12 78);
+  --primary-foreground: oklch(0.18 0.03 28);
+  --secondary: oklch(0.26 0.05 28);
+  --secondary-foreground: oklch(0.95 0.02 80);
+  --muted: oklch(0.24 0.04 28);
+  --muted-foreground: oklch(0.7 0.04 70);
+  --accent: oklch(0.78 0.12 78);
+  --accent-foreground: oklch(0.18 0.03 28);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.72 0.13 75);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-jost), "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "ss01", "liga";
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse at top, oklch(0.78 0.08 80 / 0.18), transparent 60%),
+      radial-gradient(ellipse at bottom, oklch(0.38 0.1 25 / 0.06), transparent 60%);
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='%23cba052' stroke='%23191533' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'><g transform='scale(1, -1) translate(0, -24)'><path d='M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z'/><line x1='16' y1='8' x2='2' y2='22'/><line x1='17.5' y1='15' x2='9' y2='15'/></g></svg>") 2 2, auto;
+  }
+  a, button, [role="button"] {
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='%23191533' stroke='%23cba052' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'><g transform='scale(1, -1) translate(0, -24)'><path d='M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z'/><line x1='16' y1='8' x2='2' y2='22'/><line x1='17.5' y1='15' x2='9' y2='15'/></g></svg>") 2 2, pointer !important;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-cormorant), "Georgia", ui-serif, serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .text-display {
+    font-family: var(--font-cormorant), "Georgia", ui-serif, serif;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1;
+  }
+  .eyebrow {
+    font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--gold);
+  }
+  .gold-text {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .ornate-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: var(--gold);
+  }
+  .ornate-divider::before,
+  .ornate-divider::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    max-width: 6rem;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .paper-grain {
+    position: relative;
+  }
+  .paper-grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+  }
+  .arch-frame {
+    border-top-left-radius: 9999px;
+    border-top-right-radius: 9999px;
+    overflow: hidden;
+  }
+  .ken-burns {
+    animation: kenBurns 18s ease-in-out infinite alternate;
+  }
+  /* Royal form inputs */
+  .input-royal {
+    width: 100%;
+    background: oklch(0.985 0.012 85);
+    border: 1px solid color-mix(in oklab, var(--gold) 40%, transparent);
+    padding: 0.75rem 1rem;
+    font-family: var(--font-cormorant), ui-serif, serif;
+    color: var(--foreground);
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    outline: none;
+  }
+  .input-royal:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--gold) 18%, transparent);
+  }
+  .shine-on-hover {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine-on-hover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, oklch(0.95 0.05 85 / 0.35) 50%, transparent 70%);
+    transform: translateX(-120%) skewX(-20deg);
+    transition: transform 1.2s var(--transition-elegant);
+    pointer-events: none;
+  }
+  .shine-on-hover:hover::after {
+    transform: translateX(220%) skewX(-20deg);
+  }
+  .float-slow {
+    animation: floatSlow 7s ease-in-out infinite;
+  }
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.1s var(--transition-elegant), transform 1.1s var(--transition-elegant);
+  will-change: opacity, transform;
+}
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+.reveal-left { transform: translateX(-50px); }
+.reveal-left.in-view { transform: translateX(0); }
+.reveal-right { transform: translateX(50px); }
+.reveal-right.in-view { transform: translateX(0); }
+
+/* Keyframe animations */
+@keyframes kenBurns {
+  from { transform: scale(1.05) translate(0, 0); }
+  to   { transform: scale(1.18) translate(-1.5%, 1%); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes shineSweep {
+  0% { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%) skewX(-20deg); }
+}
+
+.animate-fade-up { animation: fadeUp 0.9s var(--transition-elegant) both; }
+.animate-fade-up-delay-1 { animation: fadeUp 0.9s var(--transition-elegant) 0.15s both; }
+.animate-fade-up-delay-2 { animation: fadeUp 0.9s var(--transition-elegant) 0.3s both; }
+.animate-fade-up-delay-3 { animation: fadeUp 0.9s var(--transition-elegant) 0.45s both; }
+
+/* Chandravanshi moon-phase background animation */
+@keyframes moonDrift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes moonPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px color-mix(in oklab, var(--gold) 50%, transparent)); }
+  50%      { transform: scale(1.06); filter: drop-shadow(0 0 12px color-mix(in oklab, var(--gold) 70%, transparent)); }
+}
+.moon-pulse { animation: moonPulse 7s ease-in-out infinite; transform-origin: center; }
+
+@keyframes moonDiagonal {
+  0%   { transform: translate3d(-15vw, -20vh, 0) scale(0.9); opacity: 0; }
+  10%  { opacity: 0.55; }
+  50%  { transform: translate3d(45vw, 35vh, 0) scale(1.05); opacity: 0.75; }
+  90%  { opacity: 0.55; }
+  100% { transform: translate3d(110vw, 110vh, 0) scale(1.1); opacity: 0; }
+}
+.moon-diagonal {
+  position: absolute;
+  top: 0; left: 0;
+  color: var(--gold);
+  animation: moonDiagonal 38s linear infinite;
+  filter: drop-shadow(0 0 24px color-mix(in oklab, var(--gold) 60%, transparent));
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moon-pulse { animation: none; }
+  .moon-diagonal { animation: none; }
+}
