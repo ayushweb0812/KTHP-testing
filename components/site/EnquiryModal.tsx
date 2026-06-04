@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Ornament } from './Ornament';
 import { enquiryApi, EnquiryPayload } from '@/lib/api/enquiry';
 
@@ -11,6 +12,9 @@ interface EnquiryModalProps {
 }
 
 export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps) {
+  const [mounted, setMounted] = useState(false);
+  const [show, setShow] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,7 +26,29 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShow(true);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      const timer = setTimeout(() => {
+        setShow(false);
+        setSuccess(false);
+        setError('');
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  if (!mounted || (!isOpen && !show)) return null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -51,11 +77,14 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div 
+        className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} 
+        onClick={onClose} 
+      />
       
-      <div className="relative bg-[var(--card)] border border-[var(--gold)]/40 shadow-[var(--shadow-royal)] p-8 max-w-lg w-full rounded-sm animate-fade-up">
+      <div className={`relative bg-[var(--card)] border border-[var(--gold)]/40 shadow-[var(--shadow-royal)] p-6 md:p-8 max-w-lg w-full max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto rounded-sm transition-all duration-300 transform ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-[var(--maroon)] hover:text-[var(--gold)] transition-colors"
@@ -133,4 +162,6 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
