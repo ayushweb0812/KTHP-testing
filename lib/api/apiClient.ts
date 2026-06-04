@@ -1,6 +1,6 @@
 // d:/kothi-palace-nextjs/lib/api/apiClient.ts
 
-export const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://overhappily-nonfeloniously-roseann.ngrok-free.dev';
+export const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.kothipalace.com';
 
 /**
  * Gets the access token from localStorage (client-side only).
