@@ -52,7 +52,7 @@ export function SiteHeader() {
           </div>
           <div className="leading-none">
             <div className="text-gold text-display text-2xl tracking-wide">KILA</div>
-            <div className="text-[10px] uppercase tracking-[0.32em] text-parchment/70">
+            <div className="text-[10px] uppercase tracking-[0.32em] text-gold/70">
               The Heritage Palace
             </div>
           </div>
@@ -63,10 +63,10 @@ export function SiteHeader() {
             <Link
               key={n.href}
               href={n.href}
-              className={`text-sm uppercase tracking-[0.28em] transition-colors ${
+              className={`text-sm uppercase tracking-[0.28em] transition-colors duration-500 ${
                 pathname === n.href
                   ? "text-gold"
-                  : "text-parchment/85 hover:text-gold"
+                  : "text-gold/80 hover:text-gold"
               }`}
             >
               {n.label}
@@ -81,14 +81,14 @@ export function SiteHeader() {
             {isAuthenticated ? (
               <Link
                 href="/profile"
-                className="text-sm uppercase tracking-[0.28em] text-parchment/85 hover:text-gold transition-colors ml-4"
+                className="text-sm uppercase tracking-[0.28em] transition-colors duration-500 ml-4 text-gold/80 hover:text-gold"
               >
                 Profile
               </Link>
             ) : (
               <Link
                 href="/login"
-                className="text-sm uppercase tracking-[0.28em] text-parchment/85 hover:text-gold transition-colors ml-4"
+                className="text-sm uppercase tracking-[0.28em] transition-colors duration-500 ml-4 text-gold/80 hover:text-gold"
               >
                 Sign In
               </Link>
@@ -96,7 +96,7 @@ export function SiteHeader() {
           </nav>
 
         <button
-          className="md:hidden text-parchment p-2"
+          className="md:hidden p-2 transition-colors duration-500 text-gold"
           onClick={() => setOpen(!open)}
           aria-label="Menu"
         >

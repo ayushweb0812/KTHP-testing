@@ -7,6 +7,7 @@ import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { useEffect, useRef, useState } from "react";
 import { Ornament } from "@/components/site/Ornament";
 import { MoonPhases } from "@/components/site/MoonPhases";
+import RevealWrapper from "@/components/site/RevealWrapper";
 
 const lineage = [
   { name: "Rais Duniyapati Singh", role: "Rais of Kothi", date: "fl. 1810", text: "Married and had issue: Rais Abdhut Singh.", portrait: "/heritage/legacy/l1.webp", family: "/heritage/legacy/l2.webp" },
@@ -23,12 +24,13 @@ const lineage = [
 
 const dynasties = [
   { title: "Suryavanshi", sub: "The Solar Dynasty", img: "/heritage/about/lineage/Suryavanshi.webp", text: "The most ancient and revered, tracing its origins directly to the Sun God. This dynasty flows through the mythical kings of Ayodhya — Ikshvaku, Raghu, and the epic hero Lord Rama.", glyph: "☀" },
-  { title: "Chandravanshi", sub: "The Lunar Dynasty", img: "/heritage/about/lineage/Agnivanshi.webp", text: "Claiming descent from the Moon God (Soma), the Chandravanshi lineage is woven into the fabric of the Mahabharata. Its branches include the Puruvanshi and the Yaduvanshi, to which Lord Krishna belonged.", glyph: "☾" },
-  { title: "Agnivanshi", sub: "The Fire Dynasty", img: "/heritage/about/lineage/Chandravashi.webp", text: "Stands apart, claiming descent from a sacrificial fire pit (Agnipala), symbolizing purification and renewed martial vigor. Includes the Chauhan, Parmara, and Solanki clans.", glyph: "🔥" },
+  { title: "Chandravanshi", sub: "The Lunar Dynasty", img: "/heritage/about/lineage/Chandravashi.webp", text: "Claiming descent from the Moon God (Soma), the Chandravanshi lineage is woven into the fabric of the Mahabharata. Its branches include the Puruvanshi and the Yaduvanshi, to which Lord Krishna belonged.", glyph: "☾" },
+  { title: "Agnivanshi", sub: "The Fire Dynasty", img: "/heritage/about/lineage/Agnivanshi.webp", text: "Stands apart, claiming descent from a sacrificial fire pit (Agnipala), symbolizing purification and renewed martial vigor. Includes the Chauhan, Parmara, and Solanki clans.", glyph: "🔥" },
 ];
 
 export default function AboutPage() {
   return (
+    <RevealWrapper>
     <div className="overflow-hidden">
       {/* HERO */}
       <section className="relative h-screen min-h-[720px] flex items-center justify-center text-center text-parchment overflow-hidden">
@@ -55,7 +57,7 @@ export default function AboutPage() {
       </section>
 
       {/* INTRO */}
-      <section className="relative py-24 md:py-28 px-6 lg:px-10 paper-grain overflow-hidden">
+      <section className="relative pt-24 pb-0 md:pt-28 md:pb-0 px-6 lg:px-10 paper-grain overflow-hidden">
         <MoonPhases opacity={0.13} duration={75} count={9} size={52} />
         <div className="relative mx-auto max-w-3xl text-center reveal">
           <p className="eyebrow">Kila · The Heritage Palace</p>
@@ -113,6 +115,7 @@ export default function AboutPage() {
         </div>
       </section>
     </div>
+    </RevealWrapper>
   );
 }
 
@@ -140,7 +143,7 @@ function LineageWalk() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative py-28 md:py-32 px-6 lg:px-10 bg-[oklch(0.94_0.022_80)] paper-grain overflow-hidden">
+    <section ref={sectionRef} className="relative pt-0 pb-28 md:pt-0 md:pb-32 px-6 lg:px-10 bg-[oklch(0.94_0.022_80)] paper-grain overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-3xl opacity-30 float-slow" style={{ background: "radial-gradient(circle, var(--gold) 0%, transparent 65%)" }} />
       <MoonPhases opacity={0.11} duration={100} count={11} size={56} />
       <div className="mx-auto max-w-6xl relative">

@@ -1,85 +1,13 @@
 "use client";
 
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Ornament } from "@/components/site/Ornament";
+import { roomsApi, Room } from "@/lib/api/rooms";
 
 type Tab = "rooms" | "wedding" | "other";
 
-const ROOMS = [
-  {
-    id: "royal",
-    name: "Royal Suite",
-    tag: "Most loved",
-    price: 14000,
-    images: [
-      "/heritage/rooms/1.webp",
-      "/heritage/legacy/l5.webp",
-      "/heritage/Essence/c1.webp",
-      "/heritage/legacy/l4.webp",
-    ],
-    size: "640 sq.ft",
-    bed: "King size · Hand-carved teak",
-    sleeps: 3,
-    amenities: ["Private balcony", "Palace courtyard view", "Antique furnishing", "Royal bath", "Complimentary breakfast", "Free Wi-Fi"],
-    rating: 4.9,
-    reviews: 184,
-  },
-  {
-    id: "courtyard",
-    name: "Courtyard Room",
-    tag: "Best value",
-    price: 10000,
-    images: [
-      "/heritage/rooms/2.webp",
-      "/heritage/legacy/l2.webp",
-      "/heritage/Essence/c2.webp",
-      "/heritage/rooms/4.webp",
-    ],
-    size: "420 sq.ft",
-    bed: "Queen size",
-    sleeps: 2,
-    amenities: ["Inner courtyard view", "Marble flooring", "Hot water", "Tea / coffee", "Complimentary breakfast", "Free Wi-Fi"],
-    rating: 4.7,
-    reviews: 142,
-  },
-  {
-    id: "garden",
-    name: "Garden View Room",
-    tag: "Romantic",
-    price: 12000,
-    images: [
-      "/heritage/rooms/3.webp",
-      "/heritage/Essence/c3.webp",
-      "/heritage/legacy/l3.webp",
-      "/heritage/rooms/1.webp",
-    ],
-    size: "500 sq.ft",
-    bed: "King size",
-    sleeps: 2,
-    amenities: ["Garden facing", "Sit-out verandah", "Air conditioning", "Heritage decor", "Complimentary breakfast", "Free Wi-Fi"],
-    rating: 4.8,
-    reviews: 96,
-  },
-  {
-    id: "heritage",
-    name: "Heritage Nook",
-    tag: "Cozy",
-    price: 8000,
-    images: [
-      "/heritage/rooms/4.webp",
-      "/heritage/legacy/l1.webp",
-      "/heritage/rooms/2.webp",
-      "/heritage/Essence/c1.webp",
-    ],
-    size: "320 sq.ft",
-    bed: "Queen size",
-    sleeps: 2,
-    amenities: ["Heritage corner", "Hot water", "Tea / coffee", "Free Wi-Fi", "Complimentary breakfast"],
-    rating: 4.6,
-    reviews: 78,
-  },
-];
+
 
 const OTHER_OPTIONS = [
   { id: "homestay", title: "Homestay Experience", text: "Live as a guest of the royal household — meals with the family, evening tales by the courtyard fire.", img: "/heritage/Essence/c1.webp" },
@@ -134,37 +62,75 @@ export default function ReservePage() {
 }
 
 function RoomsList() {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadRooms() {
+      try {
+        const response = await roomsApi.getRooms();
+        if (response.success) {
+          setRooms(response.rooms);
+        } else {
+          setError("Failed to load rooms");
+        }
+      } catch (err) {
+        setError("Error loading rooms");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadRooms();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-10 gold-text">Loading rooms...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-[var(--maroon)]">{error}</div>;
+  }
+
   return (
     <div className="space-y-6 animate-fade-up">
-      {ROOMS.map((r) => (
+      {rooms.map((r) => (
         <RoomCard key={r.id} room={r} />
       ))}
     </div>
   );
 }
 
-function RoomCard({ room }: { room: (typeof ROOMS)[number] }) {
+function RoomCard({ room }: { room: Room }) {
   const [imgIdx, setImgIdx] = useState(0);
+
+  const images = room.images && room.images.length > 0 ? room.images : ["/heritage/rooms/1.webp"];
 
   return (
     <article className="group bg-card border border-[var(--gold)]/30 hover:border-[var(--gold)] hover:shadow-[var(--shadow-royal)] transition-all duration-500 overflow-hidden">
       <div className="grid lg:grid-cols-[420px_1fr_280px] gap-0">
         <div className="relative bg-[var(--maroon-deep)]">
           <div className="aspect-[4/3] lg:aspect-auto lg:h-full relative overflow-hidden">
-            <img src={room.images[imgIdx]} alt={room.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <img src={images[imgIdx]} alt={room.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.06_258/0.5)] via-transparent to-transparent" />
-            <div className="absolute top-4 left-4 px-3 py-1 bg-[var(--gold)] text-[var(--maroon-deep)] text-[10px] uppercase tracking-[0.25em] font-medium">{room.tag}</div>
-            <div className="absolute top-4 right-4 px-2.5 py-1 bg-[oklch(0.14_0.06_258/0.7)] text-parchment text-[10px] tracking-[0.2em]">{imgIdx + 1} / {room.images.length}</div>
-            <button onClick={() => setImgIdx((imgIdx - 1 + room.images.length) % room.images.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Previous image">‹</button>
-            <button onClick={() => setImgIdx((imgIdx + 1) % room.images.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Next image">›</button>
+            <div className="absolute top-4 left-4 px-3 py-1 bg-[var(--gold)] text-[var(--maroon-deep)] text-[10px] uppercase tracking-[0.25em] font-medium">Premium</div>
+            <div className="absolute top-4 right-4 px-2.5 py-1 bg-[oklch(0.14_0.06_258/0.7)] text-parchment text-[10px] tracking-[0.2em]">{imgIdx + 1} / {images.length}</div>
+            {images.length > 1 && (
+              <>
+                <button onClick={() => setImgIdx((imgIdx - 1 + images.length) % images.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Previous image">‹</button>
+                <button onClick={() => setImgIdx((imgIdx + 1) % images.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Next image">›</button>
+              </>
+            )}
           </div>
-          <div className="flex gap-1 p-2 bg-[var(--maroon-deep)]">
-            {room.images.map((src, i) => (
-              <button key={src + i} onClick={() => setImgIdx(i)} className={`flex-1 aspect-video overflow-hidden border-2 transition-all ${imgIdx === i ? "border-[var(--gold)] opacity-100" : "border-transparent opacity-60 hover:opacity-100"}`}>
-                <img src={src} alt="" className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
+          {images.length > 1 && (
+            <div className="flex gap-1 p-2 bg-[var(--maroon-deep)]">
+              {images.map((src, i) => (
+                <button key={src + i} onClick={() => setImgIdx(i)} className={`flex-1 aspect-video overflow-hidden border-2 transition-all ${imgIdx === i ? "border-[var(--gold)] opacity-100" : "border-transparent opacity-60 hover:opacity-100"}`}>
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="p-6 lg:p-8 border-l-0 lg:border-l border-[var(--gold)]/20">
@@ -172,21 +138,21 @@ function RoomCard({ room }: { room: (typeof ROOMS)[number] }) {
             <div>
               <h3 className="text-display text-3xl text-[var(--maroon)] leading-tight">{room.name}</h3>
               <div className="flex items-center gap-2 mt-2">
-                <span className="bg-[oklch(0.45_0.13_150)] text-parchment text-xs px-2 py-0.5 font-medium flex items-center gap-1">★ {room.rating}</span>
-                <span className="text-xs text-muted-foreground">({room.reviews} reviews)</span>
+                <span className="bg-[oklch(0.45_0.13_150)] text-parchment text-xs px-2 py-0.5 font-medium flex items-center gap-1">★ {room.rating || 5.0}</span>
+                <span className="text-xs text-muted-foreground">({room.reviews || 0} reviews)</span>
               </div>
             </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm font-serif text-foreground/80">
-            <span className="flex items-center gap-2"><Dot /> {room.size}</span>
-            <span className="flex items-center gap-2"><Dot /> {room.bed}</span>
-            <span className="flex items-center gap-2"><Dot /> Sleeps {room.sleeps}</span>
+            {room.description && <span className="flex items-center gap-2"><Dot /> {room.description}</span>}
+            <span className="flex items-center gap-2"><Dot /> {room.bed_type}</span>
+            <span className="flex items-center gap-2"><Dot /> Sleeps {room.capacity}</span>
           </div>
           <div className="mt-5 h-px bg-gradient-to-r from-[var(--gold)]/40 via-[var(--gold)]/20 to-transparent" />
           <div className="mt-5">
             <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--maroon)] mb-3">Amenities</p>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
-              {room.amenities.map((a) => (
+              {(room.features || []).map((a) => (
                 <li key={a} className="flex items-center gap-2 text-sm font-serif text-foreground/80"><Check /> {a}</li>
               ))}
             </ul>
@@ -199,11 +165,15 @@ function RoomCard({ room }: { room: (typeof ROOMS)[number] }) {
         </div>
 
         <div className="p-6 lg:p-8 bg-gradient-to-br from-[oklch(0.97_0.03_85)] to-[oklch(0.93_0.05_70)] border-t lg:border-t-0 lg:border-l border-[var(--gold)]/30 flex flex-col justify-center text-center lg:text-right">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">₹{Math.round(room.price * 1.25).toLocaleString()}</p>
+          {room.discount > 0 ? (
+            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">₹{Math.round(room.price * (1 + room.discount/100)).toLocaleString()}</p>
+          ) : (
+            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">₹{Math.round(room.price * 1.25).toLocaleString()}</p>
+          )}
           <div className="mt-1 text-display text-5xl gold-text leading-none">₹{room.price.toLocaleString()}</div>
           <p className="text-[11px] text-muted-foreground mt-2">per night · taxes extra</p>
-          <div className="mt-6 px-3 py-2 bg-[oklch(0.45_0.13_150/0.12)] text-[oklch(0.32_0.13_150)] text-[10px] uppercase tracking-[0.2em]">✓ 2 rooms left</div>
-          <Link href="/" className="mt-5 px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)]">
+          <div className="mt-6 px-3 py-2 bg-[oklch(0.45_0.13_150/0.12)] text-[oklch(0.32_0.13_150)] text-[10px] uppercase tracking-[0.2em]">✓ {room.available !== false ? "Available" : "Check availability"}</div>
+          <Link href={`/book/${room.id}`} className="mt-5 px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)]">
             Reserve →
           </Link>
           <button className="mt-2 text-[11px] uppercase tracking-[0.28em] text-[var(--gold)] hover:text-[var(--maroon)] transition-colors">View details</button>

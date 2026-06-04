@@ -28,8 +28,11 @@ export function TransitionLink({ children, href, className, onClick, ...props }:
     e.preventDefault();
     if (onClick) onClick(e);
 
-    // If we're already on the destination page, do nothing
-    if (pathname === href) return;
+    // If we're already on the destination page, just scroll to top
+    if (pathname === href) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
     // Trigger the exit animation defined in template.tsx
     window.dispatchEvent(new CustomEvent("page-exit"));

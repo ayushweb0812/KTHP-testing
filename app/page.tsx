@@ -26,12 +26,7 @@ const treasures = [
   { src: "/heritage/heritage/Container4.webp", title: "A Royal Memory", text: "Echoes of history resonate through corridors. Memories breathe life into silent chambers." },
 ];
 
-const rooms = [
-  { tag: "Suite", n: "01", name: "Royal Suite", text: "Carved wooden panels frame ancient memories. Silk drapes tell stories of maharajas who once walked these floors.", img: "/heritage/rooms/1.webp" },
-  { tag: "Deluxe", n: "02", name: "Courtyard Room", text: "Sunlight filters through centuries-old arches. Marble floors reflect the quiet dignity of generations past.", img: "/heritage/rooms/2.webp" },
-  { tag: "Premium", n: "03", name: "Garden View Room", text: "Fragrant jasmine drifts through open windows. Verdant landscapes echo the palace's timeless beauty.", img: "/heritage/rooms/3.webp" },
-  { tag: "Executive", n: "04", name: "Heritage Nook", text: "Small yet profound. Each corner holds a fragment of royal narrative, waiting to be discovered.", img: "/heritage/rooms/4.webp" },
-];
+import { roomsApi } from "@/lib/api/rooms";
 
 const essence = [
   { title: "Journey", sub: "The art of royal hospitality", text: "Discover the subtle rhythms of palace life through curated experiences.", img: "/heritage/Essence/c1.webp" },
@@ -46,7 +41,32 @@ const discover = [
 ];
 
 // Server Component — RevealWrapper is the only client boundary
-export default function HomePage() {
+export default async function HomePage() {
+  let rooms: any[] = [];
+  try {
+    const res = await roomsApi.getRooms();
+    if (res.success) {
+      rooms = res.rooms.map((room, i) => ({
+        id: room.id,
+        tag: "Premium",
+        n: String(i + 1).padStart(2, "0"),
+        name: room.name,
+        text: room.description || "Discover the charm of our heritage rooms.",
+        img: room.images && room.images.length > 0 ? room.images[0] : "/heritage/rooms/1.webp"
+      }));
+    }
+  } catch (error) {
+    // Fallback static rooms if API fails on server
+    rooms = [
+      { tag: "Suite", n: "01", name: "Royal Suite", text: "Carved wooden panels frame ancient memories. Silk drapes tell stories of maharajas who once walked these floors.", img: "/heritage/rooms/1.webp" },
+      { tag: "Deluxe", n: "02", name: "Courtyard Room", text: "Sunlight filters through centuries-old arches. Marble floors reflect the quiet dignity of generations past.", img: "/heritage/rooms/2.webp" },
+      { tag: "Premium", n: "03", name: "Garden View Room", text: "Fragrant jasmine drifts through open windows. Verdant landscapes echo the palace's timeless beauty.", img: "/heritage/rooms/3.webp" },
+      { tag: "Executive", n: "04", name: "Heritage Nook", text: "Small yet profound. Each corner holds a fragment of royal narrative, waiting to be discovered.", img: "/heritage/rooms/4.webp" },
+    ];
+  }
+
+  // Cap at 4 rooms to match the original design intent
+  const displayRooms = rooms.slice(0, 4);
   return (
     <RevealWrapper>
       <div className="overflow-hidden">
@@ -186,7 +206,7 @@ export default function HomePage() {
               <p className="mt-6 font-serif text-lg text-muted-foreground">Four rooms. One unbroken story of royal living.</p>
             </div>
             <div className="space-y-24">
-              {rooms.map((r, i) => (
+              {displayRooms.map((r, i) => (
                 <div key={r.name} className={`grid md:grid-cols-2 gap-12 lg:gap-20 items-center ${i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""}`}>
                   <div className="relative group">
                     <div className="absolute -inset-4 border border-[var(--gold)]/40 group-hover:-inset-6 transition-all duration-700" />
@@ -200,7 +220,7 @@ export default function HomePage() {
                     <h3 className="text-display text-4xl md:text-5xl mt-4 text-[var(--maroon)]">{r.name}</h3>
                     <Ornament className="mt-6 w-32 text-[var(--gold)]" />
                     <p className="mt-6 font-serif text-xl text-foreground/75 leading-relaxed">{r.text}</p>
-                    <Link href="/reserve" className="inline-block mt-8 text-xs uppercase tracking-[0.32em] text-[var(--maroon)] border-b border-[var(--gold)] pb-1 hover:text-[var(--gold)]">
+                    <Link href={`/book/${r.id}`} className="inline-block mt-8 text-xs uppercase tracking-[0.32em] text-[var(--maroon)] border-b border-[var(--gold)] pb-1 hover:text-[var(--gold)]">
                       Reserve this chamber →
                     </Link>
                   </div>

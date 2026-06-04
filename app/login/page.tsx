@@ -20,7 +20,11 @@ export default function LoginPage() {
       if (credentialResponse.credential) {
         const res = await authApi.googleLogin(credentialResponse.credential);
         if (res.success) {
-          router.push('/reserve'); // Redirect to reserve or account page
+          if (res.user && !res.user.phone) {
+            router.push('/profile?edit=true');
+          } else {
+            router.push('/reserve'); // Redirect to reserve
+          }
         } else {
           throw new Error('Backend authentication failed');
         }
@@ -85,7 +89,7 @@ export default function LoginPage() {
                   <GoogleLogin 
                     onSuccess={handleGoogleSuccess}
                     onError={handleGoogleError}
-                    useOneTap
+                    useOneTap={!error}
                     shape="rectangular"
                     text="signin_with"
                     theme="outline"

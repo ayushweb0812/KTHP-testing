@@ -68,6 +68,13 @@ export const fetchClient = async <T>(
   const data = isJson ? await response.json() : await response.text();
 
   if (!response.ok) {
+    if (response.status === 401) {
+      removeAccessToken();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?session_expired=true';
+      }
+    }
+
     throw {
       status: response.status,
       message: data?.error || data?.message || response.statusText,
