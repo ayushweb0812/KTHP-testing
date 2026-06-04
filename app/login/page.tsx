@@ -43,7 +43,7 @@ export default function LoginPage() {
   };
 
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "64609693042-2lg4esbh0og01p86lemhs56l6lnk6jk4.apps.googleusercontent.com"}>
       <div className="min-h-screen paper-grain flex items-center justify-center py-20 px-4 relative overflow-hidden">
         
         {/* Background ambient gradient */}
