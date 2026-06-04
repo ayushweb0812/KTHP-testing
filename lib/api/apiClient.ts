@@ -43,6 +43,7 @@ export const fetchClient = async <T>(
 
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   };
 
   if (requireAuth) {

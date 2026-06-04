@@ -61,7 +61,10 @@ export const invoicesApi = {
     const token = getAccessToken();
     const response = await fetch(`${BASE_URL}/api/invoices/${invoiceId}/download`, {
       method: 'GET',
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      headers: {
+        'ngrok-skip-browser-warning': 'true',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
     });
 
     if (!response.ok) {
