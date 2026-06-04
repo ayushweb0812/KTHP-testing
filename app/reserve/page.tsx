@@ -4,6 +4,7 @@ import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { useState, useEffect } from "react";
 import { Ornament } from "@/components/site/Ornament";
 import { roomsApi, Room } from "@/lib/api/rooms";
+import { EnquiryModal } from "@/components/site/EnquiryModal";
 
 type Tab = "rooms" | "wedding" | "other";
 
@@ -17,6 +18,13 @@ const OTHER_OPTIONS = [
 
 export default function ReservePage() {
   const [tab, setTab] = useState<Tab>("rooms");
+  const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
+  const [enquiryType, setEnquiryType] = useState("");
+
+  const openEnquiryModal = (type: string) => {
+    setEnquiryType(type);
+    setIsEnquiryModalOpen(true);
+  };
 
   return (
     <div className="pt-28 pb-24 min-h-screen bg-gradient-to-b from-[oklch(0.96_0.022_85)] via-[oklch(0.93_0.04_70)] to-[oklch(0.95_0.03_80)] paper-grain">
@@ -54,9 +62,15 @@ export default function ReservePage() {
 
       <div className="mx-auto max-w-7xl px-6 lg:px-10 mt-12">
         {tab === "rooms" && <RoomsList />}
-        {tab === "wedding" && <WeddingShoot />}
-        {tab === "other" && <OtherOptions />}
+        {tab === "wedding" && <WeddingShoot openEnquiryModal={openEnquiryModal} />}
+        {tab === "other" && <OtherOptions openEnquiryModal={openEnquiryModal} />}
       </div>
+      
+      <EnquiryModal 
+        isOpen={isEnquiryModalOpen} 
+        onClose={() => setIsEnquiryModalOpen(false)} 
+        enquiryType={enquiryType} 
+      />
     </div>
   );
 }
@@ -186,7 +200,7 @@ function RoomCard({ room }: { room: Room }) {
 function Dot() { return <span className="w-1.5 h-1.5 rounded-full bg-[var(--gold)]" />; }
 function Check() { return <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[oklch(0.5_0.13_150)] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12l5 5L20 7" /></svg>; }
 
-function WeddingShoot() {
+function WeddingShoot({ openEnquiryModal }: { openEnquiryModal: (type: string) => void }) {
   const packages = [
     { name: "Half Day", hours: "4 hours", price: "On request", includes: ["1 indoor + 1 outdoor location", "Crew of up to 6", "Use of palace courtyard", "Refreshments"], tag: "Intimate" },
     { name: "Full Day", hours: "10 hours", price: "On request", includes: ["All palace exteriors", "3 styled interiors", "Crew of up to 12", "Lunch + refreshments", "Dedicated host"], tag: "Most popular", featured: true },
@@ -223,7 +237,7 @@ function WeddingShoot() {
                 <li key={x} className="flex items-start gap-3 font-serif text-foreground/80"><Check /> {x}</li>
               ))}
             </ul>
-            <Link href="/" className={`mt-8 block text-center px-6 py-3 text-xs uppercase tracking-[0.3em] transition-colors ${p.featured ? "bg-[var(--maroon)] text-parchment hover:bg-[var(--maroon-deep)]" : "border border-[var(--maroon)] text-[var(--maroon)] hover:bg-[var(--maroon)] hover:text-parchment"}`}>Enquire</Link>
+            <button onClick={() => openEnquiryModal(p.name)} className={`mt-8 block w-full text-center px-6 py-3 text-xs uppercase tracking-[0.3em] transition-colors ${p.featured ? "bg-[var(--maroon)] text-parchment hover:bg-[var(--maroon-deep)]" : "border border-[var(--maroon)] text-[var(--maroon)] hover:bg-[var(--maroon)] hover:text-parchment"}`}>Enquire</button>
           </article>
         ))}
       </div>
@@ -231,7 +245,7 @@ function WeddingShoot() {
   );
 }
 
-function OtherOptions() {
+function OtherOptions({ openEnquiryModal }: { openEnquiryModal: (type: string) => void }) {
   return (
     <div className="grid md:grid-cols-3 gap-6 animate-fade-up">
       {OTHER_OPTIONS.map((o) => (
@@ -243,7 +257,7 @@ function OtherOptions() {
             <h3 className="text-display text-2xl text-[var(--maroon)]">{o.title}</h3>
             <Ornament className="mt-4 w-20 text-[var(--gold)]" />
             <p className="mt-4 font-serif text-foreground/75 leading-relaxed">{o.text}</p>
-            <Link href="/" className="inline-block mt-6 text-xs uppercase tracking-[0.3em] text-[var(--maroon)] border-b border-[var(--gold)] pb-1 hover:text-[var(--gold)]">Send enquiry →</Link>
+            <button onClick={() => openEnquiryModal(o.title)} className="inline-block mt-6 text-xs uppercase tracking-[0.3em] text-[var(--maroon)] border-b border-[var(--gold)] pb-1 hover:text-[var(--gold)]">Send enquiry →</button>
           </div>
         </article>
       ))}

@@ -1,0 +1,136 @@
+"use client";
+
+import React, { useState } from 'react';
+import { Ornament } from './Ornament';
+import { enquiryApi, EnquiryPayload } from '@/lib/api/enquiry';
+
+interface EnquiryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  enquiryType: string;
+}
+
+export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    date: '',
+    message: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const payload: EnquiryPayload = {
+        ...formData,
+        enquiry_type: enquiryType,
+      };
+      const res = await enquiryApi.submitEnquiry(payload);
+      if (res.success) {
+        setSuccess(true);
+      } else {
+        setError(res.message || 'Failed to submit enquiry.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while submitting.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative bg-[var(--card)] border border-[var(--gold)]/40 shadow-[var(--shadow-royal)] p-8 max-w-lg w-full rounded-sm animate-fade-up">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-[var(--maroon)] hover:text-[var(--gold)] transition-colors"
+          aria-label="Close modal"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+
+        <div className="text-center mb-6">
+          <Ornament className="mx-auto w-16 text-[var(--gold)] mb-4" />
+          <p className="eyebrow text-[var(--maroon)]">Enquiry</p>
+          <h2 className="text-display text-3xl mt-2 text-[var(--maroon)]">{enquiryType}</h2>
+        </div>
+
+        {success ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-[var(--gold)]/20 text-[var(--gold)] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <h3 className="text-xl font-serif text-[var(--maroon)] mb-2">Enquiry Sent</h3>
+            <p className="text-sm text-muted-foreground">Thank you for your interest. Our royal staff will contact you shortly.</p>
+            <button 
+              onClick={onClose}
+              className="mt-6 px-6 py-2 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 bg-red-50/50 border border-red-200/50 text-red-600 text-sm rounded">
+                {error}
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[var(--maroon)] mb-1">Name</label>
+                <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-transparent border-b border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[var(--maroon)] mb-1">Email</label>
+                <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-transparent border-b border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[var(--maroon)] mb-1">Phone</label>
+                <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-transparent border-b border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[var(--maroon)] mb-1">Preferred Date <span className="text-xs opacity-50 lowercase tracking-normal">(optional)</span></label>
+                <input type="date" name="date" value={formData.date} onChange={handleChange} className="w-full bg-transparent border-b border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-[var(--maroon)] mb-1">Message</label>
+              <textarea required rows={3} name="message" value={formData.message} onChange={handleChange} className="w-full bg-transparent border border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors resize-none" />
+            </div>
+
+            <div className="pt-4 text-center">
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[var(--shadow-gold)]"
+              >
+                {loading ? 'Sending...' : 'Submit Enquiry'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
