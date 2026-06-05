@@ -108,15 +108,20 @@ export default function BookRoomPage() {
       const paymentRes = await paymentApi.initiatePayment(createdBookingId);
       
       if (paymentRes.success && paymentRes.payment) {
-        const { order_id, amount_paise, key_id, customer } = paymentRes.payment;
+        const { payment } = paymentRes;
         
         const options = {
-          key: key_id,
-          amount: amount_paise,
-          currency: "INR",
-          name: "Kothi Palace",
+          key: payment.razorpay_key,
+          amount: payment.amount_paise,
+          currency: payment.currency,
+          order_id: payment.order_id,
+          name: "Kila Heritage",
           description: `Reservation #${createdBookingId}`,
-          order_id: order_id,
+          prefill: {
+            name: payment.customer.name,
+            email: payment.customer.email,
+            contact: payment.customer.phone
+          },
           handler: async function (response: any) {
             try {
               const verifyRes = await paymentApi.verifyPayment(createdBookingId, {
@@ -137,11 +142,6 @@ export default function BookRoomPage() {
                setSubmitError("Error verifying payment.");
                setTimeout(() => router.push("/profile"), 2000);
             }
-          },
-          prefill: {
-            name: customer?.name || `${firstName} ${lastName}`,
-            email: customer?.email || email,
-            contact: customer?.contact || phone,
           },
           theme: {
             color: "#5f181f" // var(--maroon)
