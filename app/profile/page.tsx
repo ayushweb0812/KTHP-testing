@@ -74,7 +74,7 @@ export default function ProfilePage() {
         const { payment } = paymentRes;
         
         const options = {
-          key: payment.razorpay_key,
+          key: payment.key_id,
           amount: payment.amount_paise,
           currency: payment.currency,
           order_id: payment.order_id,

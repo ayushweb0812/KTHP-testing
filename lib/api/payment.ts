@@ -12,7 +12,7 @@ export interface PaymentInitiateResponse {
     customer: {
       name: string;
       email: string;
-      contact: string;
+      phone: string;
     };
     booking_details: any;
   };
