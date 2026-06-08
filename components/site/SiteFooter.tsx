@@ -7,39 +7,39 @@ export function SiteFooter() {
   return (
     <footer
       id="contact"
-      className="relative mt-32 text-parchment paper-grain"
+      className="relative mt-4 text-parchment paper-grain"
       style={{ background: "var(--gradient-royal)" }}
     >
-      <div className="mx-auto max-w-7xl px-6 lg:px-10 py-20 relative">
-        <div className="text-center mb-16">
+      <div className="mx-auto max-w-7xl px-6 lg:px-10 py-6 relative">
+        <div className="text-center mb-4">
           <p className="eyebrow text-[var(--gold)]">Contact</p>
-          <h2 className="text-display text-5xl md:text-6xl text-parchment mt-4">
+          <h2 className="text-display text-2xl md:text-3xl text-parchment mt-2">
             Begin your <em className="gold-text not-italic">royal</em> journey
           </h2>
-          <Ornament className="mx-auto mt-8 w-40 text-[var(--gold)]" />
+          <Ornament className="mx-auto mt-3 w-16 text-[var(--gold)]" />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-12 text-center md:text-left">
+        <div className="grid md:grid-cols-3 gap-4 text-center md:text-left">
           <div>
             <p className="eyebrow">Email</p>
-            <p className="font-display text-2xl mt-3">heritage@kilatheheritageplc.com</p>
-            <p className="text-parchment/60 text-sm mt-2">For inquiries &amp; private reservations</p>
+            <p className="font-display text-xl mt-1">heritage@kilatheheritageplc.com</p>
+            <p className="text-parchment/60 text-xs mt-1">For inquiries &amp; private reservations</p>
           </div>
           <div>
             <p className="eyebrow">Telephone</p>
-            <p className="font-display text-2xl mt-3">+91 (755) 123-4567</p>
-            <p className="text-parchment/60 text-sm mt-2">Direct line to guest relations</p>
+            <p className="font-display text-xl mt-1">+91 (755) 123-4567</p>
+            <p className="text-parchment/60 text-xs mt-1">Direct line to guest relations</p>
           </div>
           <div>
             <p className="eyebrow">Address</p>
-            <p className="font-display text-2xl mt-3 leading-tight">
+            <p className="font-display text-xl mt-1 leading-tight">
               Kila The Heritage Palace<br />Maihar, Madhya Pradesh
             </p>
-            <p className="text-parchment/60 text-sm mt-2">Amidst royal serenity</p>
+            <p className="text-parchment/60 text-xs mt-1">Amidst royal serenity</p>
           </div>
         </div>
 
-        <div className="mt-20 pt-10 border-t border-[var(--gold)]/25 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="mt-6 pt-4 border-t border-[var(--gold)]/25 flex flex-col md:flex-row items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full border border-[var(--gold)]/60 flex items-center justify-center">
               <span className="text-[var(--gold)] font-display text-xl">क</span>
