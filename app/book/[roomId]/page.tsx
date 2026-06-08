@@ -111,7 +111,7 @@ export default function BookRoomPage() {
         const { payment } = paymentRes;
         
         const options = {
-          key: payment.key_id,
+          key: payment.razorpay_key,
           amount: payment.amount_paise,
           currency: payment.currency,
           order_id: payment.order_id,

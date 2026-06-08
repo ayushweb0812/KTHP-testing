@@ -139,10 +139,10 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {legacyImages.map((img, i) => (
                 <div key={img.src} className={`group relative overflow-hidden ${i === 0 ? "col-span-2 row-span-2 md:col-span-2 md:row-span-2" : ""}`}>
-                  <div className={`relative ${i === 0 ? "aspect-square" : "aspect-[4/5]"} overflow-hidden`}>
+                  <div className={`relative ${i === 0 ? "aspect-square md:aspect-auto md:absolute md:inset-0" : "aspect-[4/5]"} overflow-hidden`}>
                     <img src={img.src} alt={img.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.16_0.06_258/0.85)] via-transparent to-transparent opacity-90" />
                     <div className="absolute bottom-0 left-0 right-0 p-5 text-parchment">

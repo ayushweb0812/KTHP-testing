@@ -54,7 +54,6 @@ export function SiteFooter() {
           <div className="flex gap-8 text-xs uppercase tracking-[0.28em] text-parchment/70">
             <Link href="/" className="hover:text-[var(--gold)]">Home</Link>
             <Link href="/about" className="hover:text-[var(--gold)]">Heritage</Link>
-            <a href="#contact" className="hover:text-[var(--gold)]">Contact</a>
           </div>
           <p className="text-xs text-parchment/50">© {new Date().getFullYear()} Kila Heritage Palace</p>
         </div>
