@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { bookingsApi, Booking } from '@/lib/api/bookings';
 import { paymentApi } from '@/lib/api/payment';
 import { invoicesApi } from '@/lib/api/invoices';
+import { roomsApi, Room } from '@/lib/api/rooms';
 import Script from 'next/script';
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
 
@@ -17,13 +18,22 @@ export default function TripsPage() {
   
   const [recentlyPaidIds, setRecentlyPaidIds] = useState<number[]>([]);
   const [isDownloading, setIsDownloading] = useState<Record<number, boolean>>({});
+  const [rooms, setRooms] = useState<Record<number, Room>>({});
 
   useEffect(() => {
     let mounted = true;
-    bookingsApi.getMyBookings()
-      .then(bRes => {
-        if (mounted && bRes.success) {
-          setBookings(bRes.bookings || []);
+    Promise.all([
+      bookingsApi.getMyBookings(),
+      roomsApi.getRooms().catch(() => ({ success: false, rooms: [] }))
+    ])
+      .then(([bRes, rRes]) => {
+        if (mounted) {
+          if (bRes.success) setBookings(bRes.bookings || []);
+          if (rRes.success && rRes.rooms) {
+            const roomMap: Record<number, Room> = {};
+            rRes.rooms.forEach(r => roomMap[r.id] = r);
+            setRooms(roomMap);
+          }
           setLoadingBookings(false);
         }
       })
@@ -101,7 +111,7 @@ export default function TripsPage() {
         const invoiceData = await invoicesApi.getInvoiceByBooking(bookingId);
         if (invoiceData.success && invoiceData.invoice) {
           invoiceId = invoiceData.invoice.invoice?.id ?? (invoiceData.invoice as any).id;
-          invoiceNumber = invoiceData.invoice.invoice?.invoice_number ?? invoiceNumber;
+          invoiceNumber = invoiceData.invoice.invoice?.invoice_number ?? (invoiceData.invoice as any).invoice_number ?? invoiceNumber;
         }
       } catch (lookupErr: any) {
         if (lookupErr?.status !== 404) {
@@ -119,11 +129,18 @@ export default function TripsPage() {
         }
       }
 
-      if (!invoiceId) {
-        throw new Error('No invoice ID available for download');
+      try {
+        await invoicesApi.downloadInvoice(invoiceId, invoiceNumber);
+      } catch (downloadErr: any) {
+        // If the physical PDF file is missing on the server, try to force regenerate it
+        if (downloadErr.message?.toLowerCase().includes('not found')) {
+          console.warn('[Invoice] PDF missing on server. Attempting to regenerate...');
+          await invoicesApi.generateInvoice(bookingId);
+          await invoicesApi.downloadInvoice(invoiceId, invoiceNumber);
+        } else {
+          throw downloadErr;
+        }
       }
-
-      await invoicesApi.downloadInvoice(invoiceId, invoiceNumber);
     } catch (err: any) {
       console.error('[Invoice] Download Error:', err);
       setError(err.message || 'Failed to download invoice.');
@@ -191,16 +208,24 @@ export default function TripsPage() {
           <div className="space-y-6">
             {filteredBookings.map((booking) => {
               const isPaid = booking.payment_status === 'paid' || booking.status === 'paid' || recentlyPaidIds.includes(booking.id);
-              const roomName = booking.room_id === 1 ? "black room" : booking.room_id === 2 ? "luxury villa" : "Heritage Chamber";
-              
-              // Fallback image
-              const fallbackImg = booking.room_id === 1 ? "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?q=80&w=200&auto=format&fit=crop" : "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=200&auto=format&fit=crop";
+              const room = rooms[booking.room_id];
+              const roomName = room?.name || "Heritage Chamber";
+              const roomImage = room?.images?.[0];
 
               return (
                 <div key={booking.id} className="border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] rounded-xl overflow-hidden flex flex-col md:flex-row bg-[var(--background)]/50">
                   {/* Image */}
-                  <div className="w-full md:w-48 h-32 md:h-auto shrink-0 bg-[var(--card)]">
-                    <img src={fallbackImg} alt={roomName} className="w-full h-full object-cover" />
+                  <div className="w-full md:w-48 h-32 md:h-auto shrink-0 bg-[var(--card)] flex flex-col items-center justify-center border-r border-[color-mix(in_oklab,var(--gold)_15%,transparent)]">
+                    {roomImage ? (
+                      <img src={roomImage} alt={roomName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center opacity-70">
+                        <div className="w-12 h-12 rounded-full border border-[var(--gold)]/60 flex items-center justify-center mb-2">
+                          <span className="text-[var(--gold)] font-display text-2xl">क</span>
+                        </div>
+                        <div className="text-[var(--gold)] font-display text-sm tracking-[0.2em] uppercase">Kila</div>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Content */}

@@ -14,7 +14,7 @@ export default function PersonalDetailsPage() {
     '+44': { pattern: '[0-9]{10,11}', maxLength: 11, placeholder: 'Enter 10-11 digit number' },
     '+61': { pattern: '[0-9]{9}', maxLength: 9, placeholder: 'Enter 9-digit number' },
   };
-  
+
   const currentPhoneRules = phoneValidationRules[countryCode] || phoneValidationRules['+91'];
 
   useEffect(() => {
@@ -64,10 +64,10 @@ export default function PersonalDetailsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               First Name
             </label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               defaultValue={user?.first_name || ''}
-              className="input-royal bg-transparent rounded-md" 
+              className="input-royal bg-transparent rounded-md"
               placeholder="Enter first name"
             />
           </div>
@@ -76,10 +76,10 @@ export default function PersonalDetailsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               Last Name
             </label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               defaultValue={user?.last_name || ''}
-              className="input-royal bg-transparent rounded-md" 
+              className="input-royal bg-transparent rounded-md"
               placeholder="Enter last name"
             />
           </div>
@@ -91,10 +91,9 @@ export default function PersonalDetailsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
               Email Address
             </label>
-            <input 
-              type="email" 
-              defaultValue={user?.email ? user.email.replace('styailist.com', 'gmail.com') : ''}
-              className="input-royal bg-transparent rounded-md" 
+            <input
+              type="email"
+              className="input-royal bg-transparent rounded-md"
               pattern="^[a-zA-Z0-9._%+\-]+@gmail\.com$"
               title="Please enter a valid @gmail.com address"
               required
@@ -107,7 +106,7 @@ export default function PersonalDetailsPage() {
               Phone Number
             </label>
             <div className="flex gap-2">
-              <select 
+              <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
                 className="input-royal bg-transparent rounded-md w-28 appearance-none bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20fill=%22none%22%20stroke=%22%23cba052%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20stroke-width=%222%22%20viewBox=%220%200%2024%2024%22><path%20d=%22M6%209l6%206%206-6%22/></svg>')] bg-no-repeat bg-[position:right_0.5rem_center] pr-6 pl-3"
@@ -117,10 +116,10 @@ export default function PersonalDetailsPage() {
                 <option value="+44">+44 (UK)</option>
                 <option value="+61">+61 (AU)</option>
               </select>
-              <input 
-                type="tel" 
+              <input
+                type="tel"
                 defaultValue={user?.phone || ''}
-                className="input-royal bg-transparent rounded-md flex-1" 
+                className="input-royal bg-transparent rounded-md flex-1"
                 placeholder={currentPhoneRules.placeholder}
                 pattern={currentPhoneRules.pattern}
                 maxLength={currentPhoneRules.maxLength}
@@ -149,9 +148,9 @@ export default function PersonalDetailsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               Birthday
             </label>
-            <input 
-              type="date" 
-              className="input-royal bg-transparent rounded-md" 
+            <input
+              type="date"
+              className="input-royal bg-transparent rounded-md"
             />
           </div>
         </div>
@@ -161,9 +160,9 @@ export default function PersonalDetailsPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             Address
           </label>
-          <input 
-            type="text" 
-            className="input-royal bg-transparent rounded-md" 
+          <input
+            type="text"
+            className="input-royal bg-transparent rounded-md"
             placeholder="Enter your address"
           />
         </div>
@@ -174,9 +173,9 @@ export default function PersonalDetailsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
               Country
             </label>
-            <input 
-              type="text" 
-              className="input-royal bg-transparent rounded-md" 
+            <input
+              type="text"
+              className="input-royal bg-transparent rounded-md"
               placeholder="Enter country"
             />
           </div>
@@ -185,9 +184,9 @@ export default function PersonalDetailsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               Zipcode
             </label>
-            <input 
-              type="text" 
-              className="input-royal bg-transparent rounded-md" 
+            <input
+              type="text"
+              className="input-royal bg-transparent rounded-md"
               placeholder="Enter zipcode"
             />
           </div>

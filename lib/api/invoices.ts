@@ -59,7 +59,8 @@ export const invoicesApi = {
    */
   async downloadInvoice(invoiceId: number | string, invoiceNumber: string = 'invoice'): Promise<void> {
     const token = getAccessToken();
-    const response = await fetch(`${BASE_URL}/api/invoices/${invoiceId}/download`, {
+    const baseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+    const response = await fetch(`${baseUrl}/api/invoices/${invoiceId}/download`, {
       method: 'GET',
       headers: {
         'ngrok-skip-browser-warning': 'true',
