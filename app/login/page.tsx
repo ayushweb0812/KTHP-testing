@@ -50,7 +50,8 @@ export default function LoginPage() {
       if (response.credential) {
         const res = await authApi.googleLogin(response.credential);
         if (res.success) {
-          router.push('/reserve');
+          window.dispatchEvent(new Event('auth-change'));
+          router.push('/profile/personal-details');
         } else {
           throw new Error('Backend authentication failed');
         }

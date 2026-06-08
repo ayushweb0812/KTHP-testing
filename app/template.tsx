@@ -25,7 +25,11 @@ export default function Template({ children }: { children: React.ReactNode }) {
     );
 
     // --- PAGE EXIT ANIMATION ---
+    let isExiting = false;
     const handleExit = () => {
+      if (isExiting) return;
+      isExiting = true;
+
       if (overlayRef.current) {
         // Bring curtain UP from the bottom
         gsap.fromTo(overlayRef.current,

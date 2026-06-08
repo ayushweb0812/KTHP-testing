@@ -75,6 +75,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       if (response.credential) {
         const res = await authApi.googleLogin(response.credential);
         if (res.success) {
+          window.dispatchEvent(new Event('auth-change'));
           onClose();
           router.push('/profile/personal-details');
         } else {

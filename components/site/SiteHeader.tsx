@@ -13,7 +13,7 @@ import { LoginModal } from "./LoginModal";
 const nav = [
   { href: "/", label: "Home" },
   { href: "/about", label: "Heritage" },
-  { href: "/profile/trips", label: "Bookings" },
+  { href: "/reserve", label: "Bookings" },
 ];
 
 export function SiteHeader() {
@@ -33,6 +33,7 @@ export function SiteHeader() {
     };
     checkAuth();
     window.addEventListener('storage', checkAuth);
+    window.addEventListener('auth-change', checkAuth);
 
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
@@ -41,6 +42,7 @@ export function SiteHeader() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('auth-change', checkAuth);
     };
   }, []);
 
@@ -70,7 +72,7 @@ export function SiteHeader() {
               <Link
                 key={n.href}
                 href={n.href}
-                className={`text-sm tracking-wide transition-colors duration-500 font-medium ${pathname === n.href || (pathname?.startsWith('/profile') && n.href === '/profile/trips')
+                className={`text-sm tracking-wide transition-colors duration-500 font-medium ${pathname === n.href || (pathname?.startsWith('/reserve') && n.href === '/reserve')
                     ? "text-gold border-b border-gold pb-1"
                     : "text-gold/80 hover:text-gold"
                   }`}

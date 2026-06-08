@@ -15,6 +15,8 @@ export default function ProfileLayout({
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   useEffect(() => {
     let mounted = true;
     
@@ -69,64 +71,91 @@ export default function ProfileLayout({
   ];
 
   return (
-    <div className="min-h-screen paper-grain py-24 px-4 relative overflow-hidden flex justify-center">
-      <div className="absolute inset-0 bg-[var(--gradient-vignette)] pointer-events-none" />
-      
-      <div className="relative z-10 w-full max-w-6xl mt-12 flex flex-col md:flex-row gap-8">
+    <>
+      <div className="min-h-screen paper-grain py-24 px-4 relative overflow-hidden flex justify-center">
+        <div className="absolute inset-0 bg-[var(--gradient-vignette)] pointer-events-none" />
         
-        {/* Sidebar */}
-        <div className="w-full md:w-64 flex-shrink-0">
-          {/* Profile Card Summary */}
-          <div className="mb-6 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-full bg-[var(--maroon)] text-[var(--gold)] flex items-center justify-center text-2xl font-serif mb-3 shadow-[var(--shadow-gold)]">
-              {user.first_name ? user.first_name[0].toUpperCase() : 'G'}
+        <div className="relative z-10 w-full max-w-6xl mt-12 flex flex-col md:flex-row gap-8">
+          
+          {/* Sidebar */}
+          <div className="w-full md:w-64 flex-shrink-0">
+            {/* Profile Card Summary */}
+            <div className="mb-6 flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-[var(--maroon)] text-[var(--gold)] flex items-center justify-center text-2xl font-serif mb-3 shadow-[var(--shadow-gold)]">
+                {user.first_name ? user.first_name[0].toUpperCase() : 'G'}
+              </div>
+              <h3 className="text-lg font-serif text-[var(--foreground)]">{user.first_name} {user.last_name}</h3>
             </div>
-            <h3 className="text-lg font-serif text-[var(--foreground)]">{user.first_name} {user.last_name}</h3>
+
+            {/* Navigation Links */}
+            <nav className="bg-[var(--card)] rounded-xl shadow-[var(--shadow-royal)] border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] overflow-hidden">
+              <ul className="flex flex-col py-2">
+                {navLinks.map((link) => {
+                  const isActive = pathname === link.href || pathname?.startsWith(`${link.href}/`);
+                  return (
+                    <li key={link.name}>
+                      <Link 
+                        href={link.href}
+                        className={`flex items-center gap-3 px-6 py-4 text-sm transition-colors duration-300 ${isActive ? 'bg-[var(--gold)]/10 text-[var(--gold)] border-r-4 border-[var(--gold)]' : 'text-[var(--foreground)] hover:bg-[var(--gold)]/5 hover:text-[var(--gold)] border-r-4 border-transparent'}`}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d={link.icon} />
+                        </svg>
+                        {link.name}
+                      </Link>
+                    </li>
+                  );
+                })}
+                <li>
+                  <button 
+                    onClick={() => setShowLogoutConfirm(true)}
+                    className="w-full flex items-center gap-3 px-6 py-4 text-sm text-[var(--muted-foreground)] hover:bg-red-500/5 hover:text-red-500 border-r-4 border-transparent transition-colors duration-300 mt-4 border-t border-[color-mix(in_oklab,var(--gold)_15%,transparent)]"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="bg-[var(--card)] rounded-xl shadow-[var(--shadow-royal)] border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] overflow-hidden">
-            <ul className="flex flex-col py-2">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href || pathname?.startsWith(`${link.href}/`);
-                return (
-                  <li key={link.name}>
-                    <Link 
-                      href={link.href}
-                      className={`flex items-center gap-3 px-6 py-4 text-sm transition-colors duration-300 ${isActive ? 'bg-[var(--gold)]/10 text-[var(--gold)] border-r-4 border-[var(--gold)]' : 'text-[var(--foreground)] hover:bg-[var(--gold)]/5 hover:text-[var(--gold)] border-r-4 border-transparent'}`}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d={link.icon} />
-                      </svg>
-                      {link.name}
-                    </Link>
-                  </li>
-                );
-              })}
-              <li>
-                <button 
-                  onClick={() => {
-                    authApi.logout();
-                    window.location.href = '/';
-                  }}
-                  className="w-full flex items-center gap-3 px-6 py-4 text-sm text-[var(--muted-foreground)] hover:bg-red-500/5 hover:text-red-500 border-r-4 border-transparent transition-colors duration-300 mt-4 border-t border-[color-mix(in_oklab,var(--gold)_15%,transparent)]"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Logout
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
+          {/* Main Content Area */}
+          <div className="flex-grow bg-[var(--card)] rounded-xl shadow-[var(--shadow-royal)] border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] min-h-[600px]">
+            {children}
+          </div>
 
-        {/* Main Content Area */}
-        <div className="flex-grow bg-[var(--card)] rounded-xl shadow-[var(--shadow-royal)] border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] min-h-[600px]">
-          {children}
         </div>
-
       </div>
-    </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[var(--card)] p-8 rounded-xl shadow-[var(--shadow-royal)] border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] max-w-sm w-full text-center">
+            <h3 className="text-2xl font-serif text-[var(--gold)] mb-4">Logout</h3>
+            <p className="text-[var(--muted-foreground)] mb-8">Are you sure you want to log out of your royal account?</p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <button 
+                onClick={() => setShowLogoutConfirm(false)}
+                className="px-6 py-2 border border-[var(--gold)] text-[var(--gold)] rounded hover:bg-[var(--gold)]/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  authApi.logout();
+                  window.dispatchEvent(new Event('auth-change'));
+                  window.location.href = '/';
+                }}
+                className="px-6 py-2 bg-[var(--gold)] text-[#4B0000] rounded hover:bg-[#e6c27a] transition-colors font-medium"
+              >
+                Yes, Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

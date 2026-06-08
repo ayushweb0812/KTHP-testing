@@ -11,11 +11,18 @@ interface TransitionLinkProps extends Omit<LinkProps, "href"> {
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
+let isNavigating = false;
+
 export function TransitionLink({ children, href, className, onClick, ...props }: TransitionLinkProps) {
   const router = useRouter();
   const pathname = usePathname();
 
   const handleTransition = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isNavigating) {
+      e.preventDefault();
+      return;
+    }
+
     // If it's a modifier key or right click, let the browser handle it natively
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     
@@ -34,12 +41,18 @@ export function TransitionLink({ children, href, className, onClick, ...props }:
       return;
     }
 
+    isNavigating = true;
+
     // Trigger the exit animation defined in template.tsx
     window.dispatchEvent(new CustomEvent("page-exit"));
 
     // Wait for the exit animation duration (800ms) before changing the route
     setTimeout(() => {
       router.push(href);
+      // Reset navigation state after route change
+      setTimeout(() => {
+        isNavigating = false;
+      }, 500);
     }, 800);
   };
 
