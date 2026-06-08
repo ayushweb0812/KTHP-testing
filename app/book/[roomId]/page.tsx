@@ -121,7 +121,7 @@ export default function BookRoomPage() {
         const { payment } = paymentRes;
         
         const options = {
-          key: payment.key_id,
+          key: payment.razorpay_key,
           amount: payment.amount_paise,
           currency: payment.currency,
           order_id: payment.order_id,
@@ -238,7 +238,7 @@ export default function BookRoomPage() {
       )}
 
     <div className="min-h-screen pt-28 pb-24 bg-gradient-to-b from-[oklch(0.96_0.022_85)] via-[oklch(0.93_0.04_70)] to-[oklch(0.95_0.03_80)] paper-grain">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
       <div className="max-w-6xl mx-auto px-6 lg:px-10">
         
         <div className="mb-10 text-center animate-fade-up">

@@ -42,7 +42,7 @@ export default function TripsPage() {
         const { payment } = paymentRes;
         
         const options = {
-          key: payment.key_id,
+          key: payment.razorpay_key,
           amount: payment.amount_paise,
           currency: payment.currency,
           order_id: payment.order_id,
@@ -142,7 +142,7 @@ export default function TripsPage() {
 
   return (
     <div className="animate-fade-up">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
       
       <div className="p-8 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[var(--gold)]/20 pb-6 gap-4">
         <div>

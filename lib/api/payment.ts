@@ -8,7 +8,7 @@ export interface PaymentInitiateResponse {
     amount: number;
     amount_paise: number;
     currency: string;
-    key_id: string;
+    razorpay_key: string;
     customer: {
       name: string;
       email: string;
