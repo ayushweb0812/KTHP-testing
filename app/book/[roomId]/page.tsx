@@ -10,6 +10,15 @@ import Script from "next/script";
 import { Ornament } from "@/components/site/Ornament";
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
 
+const COUNTRY_CONFIG = {
+  "+91": { name: "IN (+91)", length: 10, placeholder: "10-digit number" },
+  "+1": { name: "US/CA (+1)", length: 10, placeholder: "10-digit number" },
+  "+44": { name: "UK (+44)", length: 10, placeholder: "10-digit number" },
+  "+61": { name: "AU (+61)", length: 9, placeholder: "9-digit number" },
+  "+971": { name: "UAE (+971)", length: 9, placeholder: "9-digit number" },
+};
+type CountryCode = keyof typeof COUNTRY_CONFIG;
+
 export default function BookRoomPage() {
   const { roomId } = useParams();
   const router = useRouter();
@@ -26,6 +35,7 @@ export default function BookRoomPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [countryCode, setCountryCode] = useState<CountryCode>("+91");
   const [phone, setPhone] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,7 +88,7 @@ export default function BookRoomPage() {
           first_name: firstName,
           last_name: lastName,
           email,
-          phone,
+          phone: `${countryCode}${phone}`,
           is_primary: true,
         },
       ],
@@ -239,7 +249,7 @@ export default function BookRoomPage() {
           <Ornament className="mx-auto mt-6 w-32 text-[var(--gold)]" />
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_400px] gap-10 items-start">
+        <div className="grid lg:grid-cols-[1fr_400px] gap-10 items-stretch">
           
           {/* Form Section */}
           <div className="bg-card border border-[var(--gold)]/30 p-8 shadow-[var(--shadow-royal)] animate-fade-up">
@@ -278,7 +288,6 @@ export default function BookRoomPage() {
                   </div>
                 </div>
 
-                <div className="mt-8 mb-4 h-px bg-gradient-to-r from-[var(--gold)]/40 to-transparent" />
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -294,16 +303,55 @@ export default function BookRoomPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">Email</label>
-                    <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground" placeholder="Email Address" />
+                    <input required type="email" pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with @ and a domain (e.g., .com)" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground" placeholder="Email Address" />
                   </div>
                   <div>
                     <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">Phone Number</label>
-                    <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground" placeholder="Phone Number" />
+                    <div className="flex gap-2">
+                      <select 
+                        value={countryCode} 
+                        onChange={(e) => {
+                          setCountryCode(e.target.value as CountryCode);
+                          setPhone("");
+                        }}
+                        className="bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground w-[110px] text-sm"
+                      >
+                        {Object.entries(COUNTRY_CONFIG).map(([code, config]) => (
+                          <option key={code} value={code} className="bg-card text-foreground">{config.name}</option>
+                        ))}
+                      </select>
+                      <input 
+                        required 
+                        type="tel" 
+                        pattern={`[0-9]{${COUNTRY_CONFIG[countryCode].length}}`} 
+                        minLength={COUNTRY_CONFIG[countryCode].length} 
+                        maxLength={COUNTRY_CONFIG[countryCode].length} 
+                        title={`Please enter a valid ${COUNTRY_CONFIG[countryCode].length}-digit phone number`} 
+                        value={phone} 
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} 
+                        className="w-full bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground" 
+                        placeholder={COUNTRY_CONFIG[countryCode].placeholder} 
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <button disabled={isSubmitting} type="submit" className="w-full mt-8 py-4 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)] disabled:opacity-70">
-                  {isSubmitting ? "Confirming..." : "Confirm Booking"}
+                <button 
+                  disabled={isSubmitting} 
+                  type="submit" 
+                  className="w-full mt-8 py-4 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-all duration-300 shadow-[var(--shadow-gold)] disabled:opacity-90 flex items-center justify-center gap-3 relative overflow-hidden group"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-parchment/30 border-t-[var(--gold)] rounded-full animate-spin" />
+                      <span>Confirming...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="relative z-10">Confirm Booking</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                    </>
+                  )}
                 </button>
               </form>
             ) : (

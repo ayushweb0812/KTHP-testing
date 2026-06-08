@@ -26,16 +26,20 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
     // --- PAGE EXIT ANIMATION ---
     const handleExit = () => {
-      // Bring curtain UP from the bottom
-      gsap.fromTo(overlayRef.current,
-        { yPercent: 100 },
-        { yPercent: 0, duration: 0.8, ease: "power4.inOut" }
-      );
+      if (overlayRef.current) {
+        // Bring curtain UP from the bottom
+        gsap.fromTo(overlayRef.current,
+          { yPercent: 100 },
+          { yPercent: 0, duration: 0.8, ease: "power4.inOut" }
+        );
+      }
       
-      // Fade and slide content OUT
-      gsap.to(contentRef.current, {
-        y: -40, opacity: 0, duration: 0.8, ease: "power3.inOut"
-      });
+      if (contentRef.current) {
+        // Fade and slide content OUT
+        gsap.to(contentRef.current, {
+          y: -40, opacity: 0, duration: 0.8, ease: "power3.inOut"
+        });
+      }
     };
 
     window.addEventListener("page-exit", handleExit);

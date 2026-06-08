@@ -20,7 +20,7 @@ export function TransitionLink({ children, href, className, onClick, ...props }:
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     
     // If it's an anchor link on the same page, do not animate
-    if (href.startsWith("#") || href.includes("#")) {
+    if (href?.startsWith("#") || href?.includes("#")) {
       if (onClick) onClick(e);
       return;
     }

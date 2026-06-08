@@ -88,7 +88,7 @@ export default function ProfileLayout({
           <nav className="bg-[var(--card)] rounded-xl shadow-[var(--shadow-royal)] border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] overflow-hidden">
             <ul className="flex flex-col py-2">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+                const isActive = pathname === link.href || pathname?.startsWith(`${link.href}/`);
                 return (
                   <li key={link.name}>
                     <Link 

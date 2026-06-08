@@ -211,15 +211,17 @@ function WeddingShoot({ openEnquiryModal }: { openEnquiryModal: (type: string) =
     <div className="animate-fade-up">
       <div className="grid md:grid-cols-3 gap-3 mb-12">
         {["/heritage/legacy/l3.webp", "/heritage/legacy/l2.webp", "/heritage/legacy/l5.webp"].map((src, i) => (
-          <div key={src} className={`relative overflow-hidden ${i === 0 ? "md:row-span-2 md:col-span-2 aspect-[4/3] md:aspect-auto" : "aspect-[3/2]"}`}>
-            <img src={src} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.06_258/0.5)] to-transparent" />
-            {i === 0 && (
-              <div className="absolute bottom-6 left-6 text-parchment">
-                <p className="eyebrow text-[var(--gold)]">Pre-Wedding · Wedding · Post-Wedding</p>
-                <h2 className="text-display text-4xl md:text-5xl mt-2">Royal backdrops for your story</h2>
-              </div>
-            )}
+          <div key={src} className={`group relative overflow-hidden ${i === 0 ? "md:row-span-2 md:col-span-2" : ""}`}>
+            <div className={`relative w-full h-full ${i === 0 ? "aspect-[4/3] md:aspect-auto md:absolute md:inset-0" : "aspect-[3/2]"}`}>
+              <img src={src} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.06_258/0.5)] to-transparent" />
+              {i === 0 && (
+                <div className="absolute bottom-6 left-6 text-parchment">
+                  <p className="eyebrow text-[var(--gold)]">Pre-Wedding · Wedding · Post-Wedding</p>
+                  <h2 className="text-display text-4xl md:text-5xl mt-2">Royal backdrops for your story</h2>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>

@@ -70,7 +70,7 @@ export function SiteHeader() {
               <Link
                 key={n.href}
                 href={n.href}
-                className={`text-sm tracking-wide transition-colors duration-500 font-medium ${pathname === n.href || (pathname.startsWith('/profile') && n.href === '/profile/trips')
+                className={`text-sm tracking-wide transition-colors duration-500 font-medium ${pathname === n.href || (pathname?.startsWith('/profile') && n.href === '/profile/trips')
                     ? "text-gold border-b border-gold pb-1"
                     : "text-gold/80 hover:text-gold"
                   }`}

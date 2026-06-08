@@ -5,6 +5,15 @@ import { createPortal } from 'react-dom';
 import { Ornament } from './Ornament';
 import { enquiryApi, EnquiryPayload } from '@/lib/api/enquiry';
 
+const COUNTRY_CONFIG = {
+  "+91": { name: "IN (+91)", length: 10, placeholder: "10-digit number" },
+  "+1": { name: "US/CA (+1)", length: 10, placeholder: "10-digit number" },
+  "+44": { name: "UK (+44)", length: 10, placeholder: "10-digit number" },
+  "+61": { name: "AU (+61)", length: 9, placeholder: "9-digit number" },
+  "+971": { name: "UAE (+971)", length: 9, placeholder: "9-digit number" },
+};
+type CountryCode = keyof typeof COUNTRY_CONFIG;
+
 interface EnquiryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,6 +31,7 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
     date: '',
     message: ''
   });
+  const [countryCode, setCountryCode] = useState<CountryCode>("+91");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -54,6 +64,10 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -62,6 +76,7 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
     try {
       const payload: EnquiryPayload = {
         ...formData,
+        phone: `${countryCode}${formData.phone}`,
         enquiry_type: enquiryType,
       };
       const res = await enquiryApi.submitEnquiry(payload);
@@ -129,14 +144,40 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
               </div>
               <div>
                 <label className="block text-xs uppercase tracking-wider text-[var(--maroon)] mb-1">Email</label>
-                <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-transparent border-b border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors" />
+                <input required type="email" name="email" pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with @ and a domain (e.g., .com)" value={formData.email} onChange={handleChange} className="w-full bg-transparent border-b border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs uppercase tracking-wider text-[var(--maroon)] mb-1">Phone</label>
-                <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-transparent border-b border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors" />
+                <div className="flex gap-2">
+                  <select 
+                    value={countryCode} 
+                    onChange={(e) => {
+                      setCountryCode(e.target.value as CountryCode);
+                      setFormData({ ...formData, phone: "" });
+                    }}
+                    className="bg-transparent border-b border-[var(--gold)]/40 p-2 focus:border-[var(--gold)] focus:outline-none transition-colors w-[110px] text-sm"
+                  >
+                    {Object.entries(COUNTRY_CONFIG).map(([code, config]) => (
+                      <option key={code} value={code} className="bg-card text-foreground">{config.name}</option>
+                    ))}
+                  </select>
+                  <input 
+                    required 
+                    type="tel" 
+                    name="phone" 
+                    pattern={`[0-9]{${COUNTRY_CONFIG[countryCode].length}}`} 
+                    minLength={COUNTRY_CONFIG[countryCode].length} 
+                    maxLength={COUNTRY_CONFIG[countryCode].length} 
+                    title={`Please enter a valid ${COUNTRY_CONFIG[countryCode].length}-digit phone number`} 
+                    value={formData.phone} 
+                    onChange={handlePhoneChange} 
+                    className="w-full bg-transparent border-b border-[var(--gold)]/40 p-2 text-sm focus:border-[var(--gold)] focus:outline-none transition-colors" 
+                    placeholder={COUNTRY_CONFIG[countryCode].placeholder} 
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-xs uppercase tracking-wider text-[var(--maroon)] mb-1">Preferred Date <span className="text-xs opacity-50 lowercase tracking-normal">(optional)</span></label>
