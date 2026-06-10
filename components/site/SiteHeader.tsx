@@ -86,7 +86,7 @@ export function SiteHeader() {
                 onClick={() => setEnquiryOpen(true)}
                 className="px-6 py-2.5 border border-gold text-gold text-sm font-medium hover:bg-gold hover:text-maroon-deep transition-all duration-500 rounded"
               >
-                Inquire Now
+                Enquire Now
               </button>
 
               {isAuthenticated ? (
@@ -139,7 +139,7 @@ export function SiteHeader() {
                 onClick={() => { setOpen(false); setEnquiryOpen(true); }}
                 className="px-6 py-3 border border-gold text-gold text-sm tracking-wide text-center rounded"
               >
-                Inquire Now
+                Enquire NowS
               </button>
               {isAuthenticated ? (
                 <Link

@@ -2,29 +2,227 @@
 
 import React, { useEffect, useState } from 'react';
 import { bookingsApi, Booking } from '@/lib/api/bookings';
-import { paymentApi } from '@/lib/api/payment';
 import { invoicesApi } from '@/lib/api/invoices';
 import { roomsApi, Room } from '@/lib/api/rooms';
-import Script from 'next/script';
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
 
 type Tab = 'Active' | 'Confirmed' | 'Cancelled';
 
+/* ─── Booking Detail Modal ─────────────────────────────────── */
+function BookingDetailModal({
+  booking,
+  room,
+  onClose,
+  onDownloadInvoice,
+  isDownloading,
+}: {
+  booking: Booking;
+  room?: Room;
+  onClose: () => void;
+  onDownloadInvoice: (id: number) => void;
+  isDownloading: boolean;
+}) {
+  const isPaid = booking.payment_status === 'paid' || booking.status === 'paid';
+  const roomName = room?.name || "Heritage Chamber";
+  const roomImage = room?.images?.[0];
+
+  const nights = (() => {
+    const a = new Date(booking.check_in_date);
+    const b = new Date(booking.check_out_date);
+    return Math.max(0, Math.ceil((b.getTime() - a.getTime()) / 86400000));
+  })();
+
+  const fmt = (d: string) =>
+    new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+  // Close on backdrop click
+  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-start justify-center py-6 px-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+      onClick={handleBackdrop}
+    >
+      <div className="bg-[var(--card)] border border-[var(--gold)]/30 shadow-[var(--shadow-royal)] w-full max-w-lg rounded-2xl animate-fade-up overflow-hidden flex flex-col my-auto">
+        {/* Header */}
+        <div className="relative">
+          {roomImage ? (
+            <div className="h-44 overflow-hidden rounded-t-2xl">
+              <img src={roomImage} alt={roomName} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--maroon-deep)]/85 via-[var(--maroon-deep)]/30 to-transparent rounded-t-2xl" />
+            </div>
+          ) : (
+            <div className="h-28 bg-gradient-to-r from-[var(--maroon-deep)] to-[var(--maroon)] rounded-t-2xl" />
+          )}
+          <div className="absolute bottom-0 left-0 p-5">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[var(--gold)] mb-1">Booking #{booking.id}</p>
+            <h2 className="text-display text-2xl text-parchment capitalize leading-tight">{roomName}</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
+            aria-label="Close"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Status badge */}
+        <div className="px-6 py-3 border-b border-[var(--gold)]/15 flex items-center justify-between">
+          <span className={`text-[10px] uppercase tracking-[0.28em] px-3 py-1 border ${
+            isPaid
+              ? "border-green-500/40 bg-green-50 text-green-700"
+              : booking.status === "cancelled"
+              ? "border-red-400/40 bg-red-50 text-red-600"
+              : "border-[var(--gold)]/40 bg-[var(--gold)]/8 text-[var(--maroon)]"
+          }`}>
+            {isPaid ? "Confirmed" : booking.status === "cancelled" ? "Cancelled" : "Pending Payment"}
+          </span>
+          <span className="text-xs text-muted-foreground font-serif">
+            Booked {fmt(booking.created_at)}
+          </span>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
+          {/* Stay dates */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-1 p-3 bg-[var(--gold)]/6 border border-[var(--gold)]/20 text-center">
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Check-in</p>
+              <p className="text-sm font-medium text-[var(--maroon)]">{fmt(booking.check_in_date)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{booking.check_in_time?.slice(0,5) || "11:00"}</p>
+            </div>
+            <div className="col-span-1 p-3 bg-[var(--gold)]/4 border border-[var(--gold)]/15 text-center flex flex-col items-center justify-center">
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Duration</p>
+              <p className="text-display text-xl gold-text">{nights}</p>
+              <p className="text-[10px] text-muted-foreground">night{nights !== 1 ? "s" : ""}</p>
+            </div>
+            <div className="col-span-1 p-3 bg-[var(--gold)]/6 border border-[var(--gold)]/20 text-center">
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Check-out</p>
+              <p className="text-sm font-medium text-[var(--maroon)]">{fmt(booking.check_out_date)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{booking.check_out_time?.slice(0,5) || "10:00"}</p>
+            </div>
+          </div>
+
+          {/* Guests */}
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[var(--gold)]/15">
+            <svg className="w-4 h-4 text-[var(--gold)] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <div className="text-sm font-serif text-foreground">
+              {booking.number_of_adults} Adult{booking.number_of_adults > 1 ? "s" : ""}
+              {booking.number_of_children > 0 ? `, ${booking.number_of_children} Child${booking.number_of_children > 1 ? "ren" : ""}` : ""}
+            </div>
+          </div>
+
+          {/* Guests list */}
+          {booking.guests && booking.guests.length > 0 && (
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.28em] text-[var(--gold)] mb-2">Guest Details</p>
+              <div className="space-y-2">
+                {booking.guests.map((g, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs font-serif py-2 border-b border-[var(--gold)]/10 last:border-0">
+                    <span className="text-foreground">
+                      {g.first_name} {g.last_name}
+                      {g.is_primary && <span className="ml-2 text-[9px] uppercase tracking-widest text-[var(--gold)]">Primary</span>}
+                    </span>
+                    <span className="text-muted-foreground">{g.email || g.phone || ""}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Price breakdown */}
+          <div>
+            <p className="text-[9px] uppercase tracking-[0.28em] text-[var(--gold)] mb-2">Price Breakdown</p>
+            <div className="space-y-1.5 text-sm font-serif">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Base price</span>
+                <span>₹{booking.base_price?.toLocaleString() ?? "—"}</span>
+              </div>
+              {booking.service_charges > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Service charges</span>
+                  <span>₹{booking.service_charges.toLocaleString()}</span>
+                </div>
+              )}
+              {booking.discount_amount > 0 && (
+                <div className="flex justify-between text-[oklch(0.45_0.13_150)]">
+                  <span>Discount{booking.coupon_code ? ` (${booking.coupon_code})` : ""}</span>
+                  <span>−₹{booking.discount_amount.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between pt-2 border-t border-[var(--gold)]/20 font-medium">
+                <span className="text-xs uppercase tracking-widest text-[var(--maroon)]">Total</span>
+                <span className="text-display text-xl gold-text">₹{booking.total_price.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky footer actions — outside scroll */}
+        <div className="px-6 pb-6 pt-4 border-t border-[var(--gold)]/15 flex gap-3 bg-[var(--card)]">
+          {!isPaid && booking.status !== "cancelled" && (
+            <Link
+              href={`/payment/${booking.id}`}
+              className="flex-1 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.28em] text-center hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)]"
+              onClick={onClose}
+            >
+              Pay Now →
+            </Link>
+          )}
+          {isPaid && (
+            <button
+              onClick={() => onDownloadInvoice(booking.id)}
+              disabled={isDownloading}
+              className="flex-1 py-3 border border-[var(--gold)] text-[var(--maroon)] text-xs uppercase tracking-[0.28em] hover:bg-[var(--gold)]/10 transition-colors disabled:opacity-50"
+            >
+              {isDownloading ? "Downloading..." : "Download Invoice"}
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="px-5 py-3 border border-[var(--gold)]/30 text-muted-foreground text-xs uppercase tracking-[0.28em] hover:border-[var(--gold)]/60 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Page ────────────────────────────────────────────── */
 export default function TripsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('Active');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [recentlyPaidIds, setRecentlyPaidIds] = useState<number[]>([]);
   const [isDownloading, setIsDownloading] = useState<Record<number, boolean>>({});
   const [rooms, setRooms] = useState<Record<number, Room>>({});
+
+  // Modal state
+  const [detailBooking, setDetailBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     let mounted = true;
     Promise.all([
       bookingsApi.getMyBookings(),
-      roomsApi.getRooms().catch(() => ({ success: false, rooms: [] }))
+      roomsApi.getRooms().catch(() => ({ success: false, rooms: [] as Room[] }))
     ])
       .then(([bRes, rRes]) => {
         if (mounted) {
@@ -42,63 +240,6 @@ export default function TripsPage() {
       });
     return () => { mounted = false; };
   }, []);
-
-  const handlePayNow = async (bookingId: number) => {
-    setError('');
-    try {
-      const paymentRes = await paymentApi.initiatePayment(bookingId);
-      
-      if (paymentRes.success && paymentRes.payment) {
-        const { payment } = paymentRes;
-        
-        const options = {
-          key: payment.razorpay_key,
-          amount: payment.amount_paise,
-          currency: payment.currency,
-          order_id: payment.order_id,
-          name: "Kila Heritage",
-          description: `Reservation #${bookingId}`,
-          prefill: {
-            name: payment.customer.name,
-            email: payment.customer.email,
-            contact: payment.customer.phone
-          },
-          handler: async function (response: any) {
-            try {
-              const verifyRes = await paymentApi.verifyPayment(bookingId, {
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-              });
-              if (verifyRes.success) {
-                setRecentlyPaidIds(prev => [...prev, bookingId]);
-                const bRes = await bookingsApi.getMyBookings();
-                if (bRes.success) setBookings(bRes.bookings || []);
-              } else {
-                setError("Payment verification failed.");
-              }
-            } catch (err) {
-               setError("Error verifying payment.");
-            }
-          },
-          theme: {
-            color: "#5f181f"
-          }
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', function (response: any){
-           setError(response.error.description || "Payment failed.");
-        });
-        rzp.open();
-      } else {
-        setError(paymentRes.message || "Failed to initiate payment.");
-      }
-    } catch (err: any) {
-      console.error("Payment Error:", err);
-      setError(`Payment Error: ${err.message || JSON.stringify(err)}`);
-    }
-  };
 
   const handleDownloadInvoice = async (bookingId: number) => {
     setIsDownloading(prev => ({ ...prev, [bookingId]: true }));
@@ -132,7 +273,6 @@ export default function TripsPage() {
       try {
         await invoicesApi.downloadInvoice(invoiceId, invoiceNumber);
       } catch (downloadErr: any) {
-        // If the physical PDF file is missing on the server, try to force regenerate it
         if (downloadErr.message?.toLowerCase().includes('not found')) {
           console.warn('[Invoice] PDF missing on server. Attempting to regenerate...');
           await invoicesApi.generateInvoice(bookingId);
@@ -159,12 +299,22 @@ export default function TripsPage() {
 
   return (
     <div className="animate-fade-up">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
-      
+
+      {/* Detail Modal */}
+      {detailBooking && (
+        <BookingDetailModal
+          booking={detailBooking}
+          room={rooms[detailBooking.room_id]}
+          onClose={() => setDetailBooking(null)}
+          onDownloadInvoice={handleDownloadInvoice}
+          isDownloading={!!isDownloading[detailBooking.id]}
+        />
+      )}
+
       <div className="p-8 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[var(--gold)]/20 pb-6 gap-4">
         <div>
           <h2 className="text-2xl font-serif text-[var(--foreground)]">Active Reservations</h2>
-          <p className="text-sm text-[var(--muted-foreground)] mt-2">View & manage your current bookings here</p>
+          <p className="text-sm text-[var(--muted-foreground)] mt-2">View &amp; manage your current bookings here</p>
         </div>
       </div>
 
@@ -205,7 +355,7 @@ export default function TripsPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {filteredBookings.map((booking) => {
               const isPaid = booking.payment_status === 'paid' || booking.status === 'paid' || recentlyPaidIds.includes(booking.id);
               const room = rooms[booking.room_id];
@@ -213,9 +363,12 @@ export default function TripsPage() {
               const roomImage = room?.images?.[0];
 
               return (
-                <div key={booking.id} className="border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] rounded-xl overflow-hidden flex flex-col md:flex-row bg-[var(--background)]/50">
+                <div
+                  key={booking.id}
+                  className="border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] hover:border-[var(--gold)]/60 hover:shadow-[var(--shadow-soft)] rounded-xl overflow-hidden flex flex-col md:flex-row bg-[var(--background)]/50 transition-all duration-300"
+                >
                   {/* Image */}
-                  <div className="w-full md:w-48 h-32 md:h-auto shrink-0 bg-[var(--card)] flex flex-col items-center justify-center border-r border-[color-mix(in_oklab,var(--gold)_15%,transparent)]">
+                  <div className="w-full md:w-48 h-36 md:h-auto shrink-0 bg-[var(--card)] flex flex-col items-center justify-center border-r border-[color-mix(in_oklab,var(--gold)_15%,transparent)] overflow-hidden">
                     {roomImage ? (
                       <img src={roomImage} alt={roomName} className="w-full h-full object-cover" />
                     ) : (
@@ -227,67 +380,72 @@ export default function TripsPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Content */}
                   <div className="p-6 flex-grow flex flex-col justify-between">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="text-lg font-serif text-[var(--foreground)] capitalize">{roomName}</h3>
                         <p className="text-xs text-[var(--muted-foreground)]">Kila the heritage palace</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-xs border ${isPaid ? 'border-green-500 text-green-600' : 'border-[var(--accent)] text-[var(--accent)]'}`}>
-                          {isPaid ? 'Confirmed' : 'Pending'}
+                        <span className={`px-3 py-1 rounded-full text-xs border ${isPaid ? 'border-green-500 text-green-600' : booking.status === 'cancelled' ? 'border-red-400 text-red-500' : 'border-[var(--accent)] text-[var(--accent)]'}`}>
+                          {isPaid ? 'Confirmed' : booking.status === 'cancelled' ? 'Cancelled' : 'Pending'}
                         </span>
                         <span className="text-xs text-[var(--muted-foreground)]">ID {booking.id}</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-xs text-[var(--foreground)] mt-2">
-                      <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-x-8 gap-y-1.5 text-xs text-[var(--foreground)]">
+                      <div className="flex gap-1.5">
                         <span className="text-[var(--muted-foreground)]">Check in :</span>
                         <span>{booking.check_in_date}</span>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5">
                         <span className="text-[var(--muted-foreground)]">Check out :</span>
                         <span>{booking.check_out_date}</span>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5">
                         <span className="text-[var(--muted-foreground)]">Guests :</span>
                         <span>{booking.number_of_adults} Adult{booking.number_of_adults > 1 ? 's' : ''}</span>
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-end mt-4">
-                      {isPaid ? (
-                        <div className="text-sm font-medium">
-                          Amount paid: <span className="font-serif">₹{booking.total_price}</span>
-                        </div>
-                      ) : (
-                        <div className="text-sm font-medium">
-                          Total: <span className="font-serif text-[var(--maroon)]">₹{booking.total_price}</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex gap-4 items-center">
+                    {/* Bottom row */}
+                    <div className="flex flex-wrap justify-between items-center mt-4 gap-3">
+                      <div className="text-sm font-medium">
+                        {isPaid ? "Amount paid:" : "Total:"}
+                        <span className={`font-serif ml-1 ${isPaid ? "text-foreground" : "text-[var(--maroon)]"}`}>
+                          ₹{booking.total_price.toLocaleString()}
+                        </span>
+                      </div>
+
+                      {/* Action buttons as boxes */}
+                      <div className="flex items-center gap-2">
                         {isPaid && (
-                           <button 
-                             onClick={() => handleDownloadInvoice(booking.id)}
-                             disabled={isDownloading[booking.id]}
-                             className="text-[var(--gold)] text-xs font-medium hover:underline flex items-center gap-1 disabled:opacity-50"
-                           >
-                             {isDownloading[booking.id] ? "Downloading..." : "Download Invoice"}
-                           </button>
-                        )}
-                        {!isPaid && activeTab === 'Active' && (
-                          <button 
-                            onClick={() => handlePayNow(booking.id)}
-                            className="text-[var(--maroon)] text-xs font-medium hover:underline flex items-center gap-1"
+                          <button
+                            onClick={() => handleDownloadInvoice(booking.id)}
+                            disabled={isDownloading[booking.id]}
+                            className="px-3 py-1.5 border border-[var(--gold)]/50 text-[var(--gold)] text-[10px] uppercase tracking-[0.22em] hover:bg-[var(--gold)]/10 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                           >
-                            Pay Now
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 15V3m0 12-4-4m4 4 4-4M2 17v2a2 2 0 002 2h16a2 2 0 002-2v-2" /></svg>
+                            {isDownloading[booking.id] ? "Downloading..." : "Invoice"}
                           </button>
                         )}
-                        <button className="text-blue-600 dark:text-blue-400 text-xs hover:underline ml-2">
+                        {!isPaid && booking.status !== 'cancelled' && (
+                          <Link
+                            href={`/payment/${booking.id}`}
+                            className="px-4 py-1.5 bg-[var(--maroon)] text-parchment text-[10px] uppercase tracking-[0.22em] hover:bg-[var(--maroon-deep)] transition-colors shadow-sm flex items-center gap-1.5"
+                          >
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
+                            Pay Now
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => setDetailBooking(booking)}
+                          className="px-4 py-1.5 border border-[var(--gold)]/40 text-[var(--maroon)] text-[10px] uppercase tracking-[0.22em] hover:bg-[var(--gold)]/10 hover:border-[var(--gold)] transition-all flex items-center gap-1.5"
+                        >
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4m0-4h.01" /></svg>
                           View Details
                         </button>
                       </div>
