@@ -52,7 +52,7 @@ export default async function HomePage() {
         n: String(i + 1).padStart(2, "0"),
         name: room.name,
         text: room.description || "Discover the charm of our heritage rooms.",
-        img: room.images && room.images.length > 0 ? room.images[0] : "/heritage/rooms/1.webp"
+        img: room.images && room.images.length > 0 ? room.images[0] : null
       }));
     }
   } catch (error) {
@@ -210,8 +210,22 @@ export default async function HomePage() {
                 <div key={r.name} className={`grid md:grid-cols-2 gap-12 lg:gap-20 items-center ${i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""}`}>
                   <div className="relative group">
                     <div className="absolute -inset-4 border border-[var(--gold)]/40 group-hover:-inset-6 transition-all duration-700" />
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      <img src={r.img} alt={r.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                    <div className="relative aspect-[4/5] overflow-hidden bg-transparent flex items-center justify-center">
+                      {r.img ? (
+                        <img src={r.img} alt={r.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-4 group-hover:scale-105 transition-transform duration-1000 opacity-70">
+                          <div className="w-20 h-20 rounded-full border border-[var(--gold)]/60 flex items-center justify-center">
+                            <span className="text-[var(--gold)] text-display text-4xl">क</span>
+                          </div>
+                          <div className="leading-none text-center">
+                            <div className="text-[var(--gold)] text-display text-3xl tracking-wide mb-2">KILA</div>
+                            <div className="text-[10px] uppercase tracking-[0.32em] text-[var(--gold)]/70">
+                              The Heritage Palace
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="absolute -top-6 -left-6 text-display text-8xl gold-text opacity-90">{r.n}</div>
                   </div>
