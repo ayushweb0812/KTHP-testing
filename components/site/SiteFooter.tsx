@@ -19,18 +19,18 @@ export function SiteFooter() {
           <Ornament className="mx-auto mt-3 w-16 text-[var(--gold)]" />
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-4 text-center sm:text-left">
-          <div>
+        <div className="grid sm:grid-cols-3 gap-4 text-center">
+          <div className="sm:text-left">
             <p className="eyebrow">Email</p>
             <p className="font-display text-xl mt-1">heritage@kilatheheritageplc.com</p>
             <p className="text-parchment/60 text-xs mt-1">For inquiries &amp; private reservations</p>
           </div>
-          <div>
+          <div className="sm:text-center">
             <p className="eyebrow">Telephone</p>
             <p className="font-display text-xl mt-1">+91 (755) 123-4567</p>
             <p className="text-parchment/60 text-xs mt-1">Direct line to guest relations</p>
           </div>
-          <div>
+          <div className="sm:text-right">
             <p className="eyebrow">Address</p>
             <p className="font-display text-xl mt-1 leading-tight">
               Kila The Heritage Palace<br />Maihar, Madhya Pradesh

@@ -60,18 +60,17 @@ export function MoonPhases({
                 <stop offset="0%" stopColor="currentColor" stopOpacity="0.95" />
                 <stop offset="100%" stopColor="currentColor" stopOpacity="0.55" />
               </radialGradient>
+              <mask id={`moon-mask-${i}`}>
+                <rect x="-20" y="-20" width="40" height="40" fill="white" />
+                {p.sr > 0 && (
+                  <circle cx={p.sx} cy="0" r={p.sr} fill="black" />
+                )}
+              </mask>
             </defs>
-            <circle cx="0" cy="0" r="18" fill="currentColor" opacity="0.08" />
-            <circle cx="0" cy="0" r="12" fill={`url(#mg-${i})`} />
-            {p.sr > 0 && (
-              <circle
-                cx={p.sx}
-                cy="0"
-                r={p.sr}
-                fill="var(--background)"
-                opacity="0.95"
-              />
-            )}
+            <g mask={`url(#moon-mask-${i})`}>
+              <circle cx="0" cy="0" r="18" fill="currentColor" opacity="0.08" />
+              <circle cx="0" cy="0" r="12" fill={`url(#mg-${i})`} />
+            </g>
             <circle cx="0" cy="0" r="12" fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.7" />
           </svg>
         ))}

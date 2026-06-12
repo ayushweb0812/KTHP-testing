@@ -3,6 +3,7 @@ import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { Ornament } from "@/components/site/Ornament";
 import { MoonPhases } from "@/components/site/MoonPhases";
 import RevealWrapper from "@/components/site/RevealWrapper";
+import { HeroSlideshow } from "@/components/site/HeroSlideshow";
 
 export const metadata: Metadata = {
   title: "Kila — The Heritage Palace | 287 Years of Royal Legacy",
@@ -72,25 +73,7 @@ export default async function HomePage() {
       <div className="overflow-hidden">
         {/* HERO */}
         <section className="relative h-screen min-h-[720px] flex items-center justify-center text-center text-parchment overflow-hidden">
-          <div className="absolute inset-0">
-            <img src="/heritage/legacy/l3.webp" alt="Kila Heritage Palace at sunset" className="w-full h-full object-cover ken-burns" />
-            <div className="absolute inset-0 bg-[oklch(0.14_0.04_30/0.55)]" />
-            <div className="absolute inset-0" style={{ background: "var(--gradient-vignette)" }} />
-          </div>
-          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-            <svg className="moon-diagonal" width="180" height="180" viewBox="-20 -20 40 40">
-              <defs>
-                <radialGradient id="hero-moon" cx="35%" cy="35%" r="70%">
-                  <stop offset="0%" stopColor="currentColor" stopOpacity="0.95" />
-                  <stop offset="100%" stopColor="currentColor" stopOpacity="0.5" />
-                </radialGradient>
-              </defs>
-              <circle cx="0" cy="0" r="19" fill="currentColor" opacity="0.1" />
-              <circle cx="0" cy="0" r="14" fill="url(#hero-moon)" />
-              <circle cx="-6" cy="0" r="13" fill="oklch(0.14 0.04 30)" opacity="0.55" />
-              <circle cx="0" cy="0" r="14" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.7" />
-            </svg>
-          </div>
+          <HeroSlideshow />
           <div className="relative z-10 px-6 max-w-5xl">
             <p className="eyebrow text-[var(--gold)] animate-fade-up">Estd. 1738 · Madhya Pradesh</p>
             <Ornament className="mx-auto mt-6 w-44 text-[var(--gold)] animate-fade-up-delay-1" />
