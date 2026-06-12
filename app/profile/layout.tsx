@@ -27,12 +27,14 @@ export default function ProfileLayout({
           if (res.success && res.user) {
             setUser(res.user);
           } else {
-            router.push('/login');
+            const currentUrl = window.location.pathname + window.location.search;
+            router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
           }
         }
       } catch (err: any) {
         if (mounted) {
-          router.push('/login');
+          const currentUrl = window.location.pathname + window.location.search;
+          router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
         }
       } finally {
         if (mounted) {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { bookingsApi, Booking } from '@/lib/api/bookings';
 import { invoicesApi } from '@/lib/api/invoices';
 import { roomsApi, Room } from '@/lib/api/rooms';
@@ -44,25 +45,38 @@ function BookingDetailModal({
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener("keydown", handler);
+      document.body.style.overflow = '';
+    };
   }, [onClose]);
 
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-start justify-center py-6 px-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
-      onClick={handleBackdrop}
-    >
-      <div className="bg-[var(--card)] border border-[var(--gold)]/30 shadow-[var(--shadow-royal)] w-full max-w-lg rounded-2xl animate-fade-up overflow-hidden flex flex-col my-auto">
-        {/* Header */}
-        <div className="relative">
-          {roomImage ? (
-            <div className="h-44 overflow-hidden rounded-t-2xl">
-              <img src={roomImage} alt={roomName} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--maroon-deep)]/85 via-[var(--maroon-deep)]/30 to-transparent rounded-t-2xl" />
-            </div>
-          ) : (
-            <div className="h-28 bg-gradient-to-r from-[var(--maroon-deep)] to-[var(--maroon)] rounded-t-2xl" />
-          )}
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+        onClick={onClose} 
+      />
+      <div className="relative bg-[var(--card)] border border-[var(--gold)]/30 shadow-[var(--shadow-royal)] w-full max-w-4xl max-h-[90vh] rounded-sm flex flex-col animate-fade-up">
+        
+        {/* Scrollable body */}
+        <div className="overflow-y-auto flex-1 scrollbar-thin flex flex-col" data-lenis-prevent="true">
+          
+          {/* Header */}
+          <div className="relative shrink-0">
+            {roomImage ? (
+              <div className="aspect-[21/9] overflow-hidden">
+                <img src={roomImage} alt={roomName} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--maroon-deep)]/85 via-[var(--maroon-deep)]/30 to-transparent" />
+              </div>
+            ) : (
+              <div className="h-48 bg-gradient-to-r from-[var(--maroon-deep)] to-[var(--maroon)]" />
+            )}
           <div className="absolute bottom-0 left-0 p-5">
             <p className="text-[10px] uppercase tracking-[0.28em] text-[var(--gold)] mb-1">Booking #{booking.id}</p>
             <h2 className="text-display text-2xl text-parchment capitalize leading-tight">{roomName}</h2>
@@ -95,7 +109,7 @@ function BookingDetailModal({
         </div>
 
         {/* Scrollable body */}
-        <div className="p-6 space-y-5 overflow-y-auto flex-1">
+        <div className="p-6 space-y-5">
           {/* Stay dates */}
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-1 p-3 bg-[var(--gold)]/6 border border-[var(--gold)]/20 text-center">
@@ -171,9 +185,10 @@ function BookingDetailModal({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Sticky footer actions — outside scroll */}
-        <div className="px-6 pb-6 pt-4 border-t border-[var(--gold)]/15 flex gap-3 bg-[var(--card)]">
+      {/* Sticky footer actions — outside scroll */}
+        <div className="px-6 pb-6 pt-4 border-t border-[var(--gold)]/15 flex gap-3 bg-[var(--card)] shrink-0">
           {!isPaid && booking.status !== "cancelled" && (
             <Link
               href={`/payment/${booking.id}`}
@@ -200,7 +215,8 @@ function BookingDetailModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -298,8 +314,7 @@ export default function TripsPage() {
   });
 
   return (
-    <div className="animate-fade-up">
-
+    <>
       {/* Detail Modal */}
       {detailBooking && (
         <BookingDetailModal
@@ -310,6 +325,7 @@ export default function TripsPage() {
           isDownloading={!!isDownloading[detailBooking.id]}
         />
       )}
+      <div className="animate-fade-up">
 
       <div className="p-8 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[var(--gold)]/20 pb-6 gap-4">
         <div>
@@ -458,5 +474,6 @@ export default function TripsPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

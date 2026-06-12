@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { authApi } from "@/lib/api/auth";
 import { roomsApi, Room } from "@/lib/api/rooms";
 import { bookingsApi, CreateBookingPayload, Booking } from "@/lib/api/bookings";
 import { paymentApi } from "@/lib/api/payment";
@@ -10,6 +11,7 @@ import { getAccessToken } from "@/lib/api/apiClient";
 import Script from "next/script";
 import { Ornament } from "@/components/site/Ornament";
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
+import { RoomDetailsModal } from "@/components/site/RoomDetailsModal";
 
 const COUNTRY_CONFIG = {
   "+91": { name: "IN (+91)", length: 10, placeholder: "10-digit number" },
@@ -47,6 +49,8 @@ export default function BookRoomPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [imgIdx, setImgIdx] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   /* ─── step ───────────────────────────────────── */
   const [step, setStep] = useState<Step>(1);
@@ -102,20 +106,39 @@ export default function BookRoomPage() {
   /* ─── load room ──────────────────────────────── */
   useEffect(() => {
     const token = getAccessToken();
-    if (!token) { router.push("/login"); return; }
+    if (!token) { 
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
+      return; 
+    }
 
-    async function fetchRoom() {
+    async function fetchData() {
       try {
-        const res = await roomsApi.getRoomById(Number(roomId));
-        if (res.success) setRoom(res.room);
+        const [roomRes, profileRes] = await Promise.all([
+          roomsApi.getRoomById(Number(roomId)),
+          authApi.getProfile().catch(() => ({ success: false, user: null }))
+        ]);
+
+        if (roomRes.success) setRoom(roomRes.room);
         else setError("Room not found.");
+
+        if (profileRes.success && profileRes.user) {
+          const u = profileRes.user;
+          if (u.first_name) setFirstName(u.first_name);
+          if (u.last_name) setLastName(u.last_name);
+          if (u.email) setEmail(u.email);
+          if (u.phone) {
+            const phoneVal = u.phone.replace(/^\+\d+\s/, '');
+            setPhone(phoneVal);
+          }
+        }
       } catch {
-        setError("Error loading room details.");
+        setError("Error loading details.");
       } finally {
         setLoading(false);
       }
     }
-    if (roomId) fetchRoom();
+    if (roomId) fetchData();
   }, [roomId, router]);
 
   /* ─── coupon apply ───────────────────────────── */
@@ -812,10 +835,28 @@ export default function BookRoomPage() {
               <h3 className="text-display text-3xl text-[var(--maroon)] mt-2">{room.name}</h3>
 
               {room.images && room.images.length > 0 && (
-                <div className="aspect-[4/3] w-full mt-4 overflow-hidden border border-[var(--gold)]/20 shadow-sm">
-                  <img src={room.images[0]} alt={room.name} className="w-full h-full object-cover" />
+                <div className="aspect-[4/3] w-full mt-4 overflow-hidden border border-[var(--gold)]/20 shadow-sm relative group cursor-pointer" onClick={() => setIsModalOpen(true)}>
+                  <img src={room.images[imgIdx]} alt={room.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  {room.images.length > 1 && (
+                    <>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setImgIdx((imgIdx - 1 + room.images!.length) % room.images!.length); }} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Previous image">‹</button>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setImgIdx((imgIdx + 1) % room.images!.length); }} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Next image">›</button>
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                        {room.images.map((_, idx) => (
+                          <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-colors ${idx === imgIdx ? "bg-[var(--gold)]" : "bg-white/50"}`} />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <span className="bg-black/60 text-white text-[10px] uppercase tracking-widest px-3 py-1.5 backdrop-blur-sm rounded-sm">View Gallery</span>
+                  </div>
                 </div>
               )}
+
+              <div className="mt-4 text-center">
+                <button type="button" onClick={() => setIsModalOpen(true)} className="text-[10px] uppercase tracking-[0.2em] text-[var(--gold)] hover:text-[var(--maroon)] transition-colors border-b border-transparent hover:border-[var(--maroon)]">View full room details</button>
+              </div>
 
               <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-sm font-serif text-foreground/80">
                 <span>Max Capacity: {room.capacity}</span>
@@ -885,6 +926,12 @@ export default function BookRoomPage() {
           </div>
         </div>
       </div>
+
+      <RoomDetailsModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        roomId={Number(roomId)}
+      />
     </>
   );
 }

@@ -69,7 +69,11 @@ export default function PaymentPage() {
   /* ─── load booking ───────────────────────────── */
   useEffect(() => {
     const token = getAccessToken();
-    if (!token) { router.push("/login"); return; }
+    if (!token) { 
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
+      return; 
+    }
 
     async function fetchBooking() {
       try {

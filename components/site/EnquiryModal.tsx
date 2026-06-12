@@ -99,7 +99,7 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
         onClick={onClose} 
       />
       
-      <div className={`relative bg-[var(--card)] border border-[var(--gold)]/40 shadow-[var(--shadow-royal)] p-6 md:p-8 max-w-lg w-full max-h-full overflow-y-auto rounded-sm transition-all duration-300 transform flex flex-col ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
+      <div className={`relative bg-[var(--card)] border border-[var(--gold)]/40 shadow-[var(--shadow-royal)] p-6 md:p-8 max-w-lg w-full max-h-full overflow-y-auto rounded-sm transition-all duration-300 transform flex flex-col ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`} data-lenis-prevent="true">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-[var(--maroon)] hover:text-[var(--gold)] transition-colors"

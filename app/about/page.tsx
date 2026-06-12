@@ -147,7 +147,7 @@ function LineageWalk() {
       <div aria-hidden className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-3xl opacity-30 float-slow" style={{ background: "radial-gradient(circle, var(--gold) 0%, transparent 65%)" }} />
       <MoonPhases opacity={0.11} duration={100} count={11} size={56} />
       <div className="mx-auto max-w-6xl relative">
-        <div className="sticky top-20 z-20 -mx-6 lg:-mx-10 mb-14 px-6 lg:px-10 py-5 bg-[oklch(0.94_0.022_80/0.85)] backdrop-blur-md border-y border-[var(--gold)]/20">
+        <div className="sticky top-20 z-30 -mx-6 lg:-mx-10 mb-14 px-6 lg:px-10 py-5 bg-[oklch(0.94_0.022_80)] border-y border-[var(--gold)]/20 shadow-sm">
           <div className="flex items-baseline justify-between gap-6 max-w-6xl mx-auto">
             <div>
               <p className="eyebrow">Walk the Lineage</p>
@@ -165,9 +165,9 @@ function LineageWalk() {
           </div>
         </div>
         <div className="relative">
-          <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-[var(--gold)]/20" />
-          <div className="absolute left-6 md:left-1/2 top-0 w-px bg-gradient-to-b from-[var(--gold)] via-[var(--maroon)] to-transparent" style={{ height: `${progress * 100}%` }} />
-          <div className="absolute left-6 md:left-1/2 -translate-x-1/2 w-6 h-6 rounded-full pointer-events-none" style={{ top: `${progress * 100}%`, background: "var(--gold)", boxShadow: "0 0 30px 8px color-mix(in oklab, var(--gold) 60%, transparent)" }} />
+          <div className="absolute left-6 sm:left-1/2 top-0 bottom-0 w-px bg-[var(--gold)]/20" />
+          <div className="absolute left-6 sm:left-1/2 top-0 w-px bg-gradient-to-b from-[var(--gold)] via-[var(--maroon)] to-transparent" style={{ height: `${progress * 100}%` }} />
+          <div className="absolute left-6 sm:left-1/2 -translate-x-1/2 w-6 h-6 rounded-full pointer-events-none" style={{ top: `${progress * 100}%`, background: "var(--gold)", boxShadow: "0 0 30px 8px color-mix(in oklab, var(--gold) 60%, transparent)" }} />
           {lineage.map((p, i) => (
             <LineageEntry key={p.name} entry={p} index={i} total={lineage.length} isActive={i === activeIndex} />
           ))}
@@ -195,22 +195,22 @@ function LineageEntry({ entry, index, isActive }: { entry: (typeof lineage)[numb
   }, []);
 
   return (
-    <div ref={ref} className="relative mb-24 md:mb-32 md:grid md:grid-cols-2 md:gap-16 items-center">
-      <div className={`absolute left-6 md:left-1/2 -translate-x-1/2 top-3 z-10 transition-all duration-700 ease-out ${visible ? "opacity-100 scale-100" : "opacity-0 scale-50"}`}>
+    <div ref={ref} className="relative mb-24 md:mb-32 sm:grid sm:grid-cols-2 sm:gap-16 items-center">
+      <div className={`absolute left-6 sm:left-1/2 -translate-x-1/2 top-3 z-10 transition-all duration-700 ease-out ${visible ? "opacity-100 scale-100" : "opacity-0 scale-50"}`}>
         <div className={`relative w-12 h-12 rounded-full border flex items-center justify-center font-display text-sm transition-all duration-500 ${isActive ? "border-[var(--gold)] bg-[var(--gold)] text-[var(--maroon-deep)] shadow-[0_0_24px_rgba(184,134,60,0.6)] scale-110" : "border-[var(--gold)]/60 bg-[oklch(0.94_0.022_80)] text-[var(--maroon)]"}`}>
           {String(index + 1).padStart(2, "0")}
         </div>
       </div>
-      <div className={`hidden md:flex justify-center transition-all duration-1000 ease-out ${left ? "md:order-2 md:pl-16 md:justify-start" : "md:order-1 md:pr-16 md:justify-end"} ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} style={{ transitionDelay: visible ? "260ms" : "0ms" }}>
+      <div className={`hidden sm:flex justify-center transition-all duration-1000 ease-out ${left ? "sm:order-2 sm:pl-16 sm:justify-start" : "sm:order-1 sm:pr-16 sm:justify-end"} ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} style={{ transitionDelay: visible ? "260ms" : "0ms" }}>
         <PortraitFrame portrait={entry.portrait} family={entry.family} name={entry.name} />
       </div>
-      <div className={`pl-20 md:pl-0 transition-all duration-1000 ease-out ${left ? "md:order-1 md:text-right md:pr-16" : "md:order-2 md:pl-16"} ${visible ? "opacity-100 translate-x-0" : `opacity-0 ${left ? "md:-translate-x-12" : "md:translate-x-12"} translate-y-6`}`} style={{ transitionDelay: visible ? "120ms" : "0ms" }}>
+      <div className={`pl-20 sm:pl-0 transition-all duration-1000 ease-out ${left ? "sm:order-1 sm:text-right sm:pr-16" : "sm:order-2 sm:pl-16"} ${visible ? "opacity-100 translate-x-0" : `opacity-0 ${left ? "sm:-translate-x-12" : "sm:translate-x-12"} translate-y-6`}`} style={{ transitionDelay: visible ? "120ms" : "0ms" }}>
         <p className="eyebrow text-[var(--gold)]">{entry.date}</p>
         <h3 className="text-display text-3xl md:text-4xl mt-3 text-[var(--maroon)] leading-tight">{entry.name}</h3>
         <p className="font-serif italic text-[var(--maroon)]/70 mt-2">{entry.role}</p>
-        <div className={`mt-4 h-px w-24 bg-gradient-to-r from-[var(--gold)] to-transparent ${left ? "md:ml-auto md:from-transparent md:to-[var(--gold)]" : ""}`} />
-        {entry.text && <p className="mt-5 font-serif text-base md:text-lg text-foreground/75 leading-relaxed max-w-xl md:inline-block">{entry.text}</p>}
-        <div className="mt-6 md:hidden"><PortraitFrame portrait={entry.portrait} family={entry.family} name={entry.name} compact /></div>
+        <div className={`mt-4 h-px w-24 bg-gradient-to-r from-[var(--gold)] to-transparent ${left ? "sm:ml-auto sm:from-transparent sm:to-[var(--gold)]" : ""}`} />
+        {entry.text && <p className="mt-5 font-serif text-base md:text-lg text-foreground/75 leading-relaxed max-w-xl sm:inline-block">{entry.text}</p>}
+        <div className="mt-6 sm:hidden"><PortraitFrame portrait={entry.portrait} family={entry.family} name={entry.name} compact /></div>
       </div>
     </div>
   );

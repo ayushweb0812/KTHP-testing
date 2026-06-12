@@ -19,7 +19,7 @@ export function SiteFooter() {
           <Ornament className="mx-auto mt-3 w-16 text-[var(--gold)]" />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4 text-center md:text-left">
+        <div className="grid sm:grid-cols-3 gap-4 text-center sm:text-left">
           <div>
             <p className="eyebrow">Email</p>
             <p className="font-display text-xl mt-1">heritage@kilatheheritageplc.com</p>
@@ -39,7 +39,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-[var(--gold)]/25 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="mt-6 pt-4 border-t border-[var(--gold)]/25 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full border border-[var(--gold)]/60 flex items-center justify-center">
               <span className="text-[var(--gold)] font-display text-xl">क</span>

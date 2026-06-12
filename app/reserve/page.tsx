@@ -2,9 +2,11 @@
 
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { useState, useEffect } from "react";
+import { RoomWatermark } from "@/components/site/RoomWatermark";
 import { Ornament } from "@/components/site/Ornament";
 import { roomsApi, Room } from "@/lib/api/rooms";
 import { EnquiryModal } from "@/components/site/EnquiryModal";
+import { RoomDetailsModal } from "@/components/site/RoomDetailsModal";
 
 type Tab = "rooms" | "wedding" | "other";
 
@@ -79,6 +81,7 @@ function RoomsList() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadRooms() {
@@ -109,32 +112,43 @@ function RoomsList() {
   return (
     <div className="space-y-6 animate-fade-up">
       {rooms.map((r) => (
-        <RoomCard key={r.id} room={r} />
+        <RoomCard key={r.id} room={r} onOpenDetails={() => setSelectedRoomId(r.id)} />
       ))}
+      <RoomDetailsModal 
+        isOpen={selectedRoomId !== null} 
+        onClose={() => setSelectedRoomId(null)} 
+        roomId={selectedRoomId} 
+      />
     </div>
   );
 }
 
-function RoomCard({ room }: { room: Room }) {
+function RoomCard({ room, onOpenDetails }: { room: Room; onOpenDetails: () => void }) {
   const [imgIdx, setImgIdx] = useState(0);
 
-  const images = room.images && room.images.length > 0 ? room.images : ["/heritage/rooms/1.webp"];
+  const images = room.images && room.images.length > 0 ? room.images : [];
 
   return (
     <article className="group bg-card border border-[var(--gold)]/30 hover:border-[var(--gold)] hover:shadow-[var(--shadow-royal)] transition-all duration-500 overflow-hidden">
       <div className="grid lg:grid-cols-[420px_1fr_280px] gap-0">
-        <div className="relative bg-[var(--maroon-deep)]">
+        <div className="relative bg-parchment">
           <div className="aspect-[4/3] lg:aspect-auto lg:h-full relative overflow-hidden">
-            <img src={images[imgIdx]} alt={room.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.06_258/0.5)] via-transparent to-transparent" />
-            <div className="absolute top-4 left-4 px-3 py-1 bg-[var(--gold)] text-[var(--maroon-deep)] text-[10px] uppercase tracking-[0.25em] font-medium">Premium</div>
-            <div className="absolute top-4 right-4 px-2.5 py-1 bg-[oklch(0.14_0.06_258/0.7)] text-parchment text-[10px] tracking-[0.2em]">{imgIdx + 1} / {images.length}</div>
-            {images.length > 1 && (
+            {images.length > 0 ? (
               <>
-                <button onClick={() => setImgIdx((imgIdx - 1 + images.length) % images.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Previous image">‹</button>
-                <button onClick={() => setImgIdx((imgIdx + 1) % images.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Next image">›</button>
+                <img src={images[imgIdx]} alt={room.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.06_258/0.5)] via-transparent to-transparent" />
+                <div className="absolute top-4 right-4 px-2.5 py-1 bg-[oklch(0.14_0.06_258/0.7)] text-parchment text-[10px] tracking-[0.2em]">{imgIdx + 1} / {images.length}</div>
+                {images.length > 1 && (
+                  <>
+                    <button onClick={() => setImgIdx((imgIdx - 1 + images.length) % images.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Previous image">‹</button>
+                    <button onClick={() => setImgIdx((imgIdx + 1) % images.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-parchment/90 hover:bg-[var(--gold)] text-[var(--maroon-deep)] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100" aria-label="Next image">›</button>
+                  </>
+                )}
               </>
+            ) : (
+              <RoomWatermark />
             )}
+            <div className="absolute top-4 left-4 px-3 py-1 bg-[var(--gold)] text-[var(--maroon-deep)] text-[10px] uppercase tracking-[0.25em] font-medium z-10">Premium</div>
           </div>
           {images.length > 1 && (
             <div className="flex gap-1 p-2 bg-[var(--maroon-deep)]">
@@ -190,7 +204,7 @@ function RoomCard({ room }: { room: Room }) {
           <Link href={`/book/${room.id}`} className="mt-5 px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)]">
             Reserve →
           </Link>
-          <button className="mt-2 text-[11px] uppercase tracking-[0.28em] text-[var(--gold)] hover:text-[var(--maroon)] transition-colors">View details</button>
+          <button onClick={onOpenDetails} className="mt-2 text-[11px] uppercase tracking-[0.28em] text-[var(--gold)] hover:text-[var(--maroon)] transition-colors">View details</button>
         </div>
       </div>
     </article>

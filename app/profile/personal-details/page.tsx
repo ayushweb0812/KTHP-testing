@@ -6,7 +6,51 @@ import { authApi, User } from '@/lib/api/auth';
 export default function PersonalDetailsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [countryCode, setCountryCode] = useState('+91');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const formData = new FormData(e.currentTarget);
+    
+    // Construct phone with country code if provided
+    const phoneInput = formData.get('phone') as string;
+    const phone = phoneInput ? `${countryCode} ${phoneInput}`.trim() : '';
+
+    const rawPayload: Record<string, string> = {
+      first_name: formData.get('first_name') as string,
+      last_name: formData.get('last_name') as string,
+      phone,
+      gender: formData.get('gender') as string,
+      birthday: formData.get('birthday') as string,
+      address: formData.get('address') as string,
+      country: formData.get('country') as string,
+      zipcode: formData.get('zipcode') as string,
+    };
+
+    // Remove empty fields to prevent backend validation errors for optional fields
+    const payload = Object.fromEntries(
+      Object.entries(rawPayload).filter(([_, v]) => v !== '')
+    );
+
+    try {
+      const res = await authApi.updateProfile(payload);
+      if (res.success && res.user) {
+        setUser(res.user);
+        alert('Profile saved successfully!');
+      } else {
+        alert(res.message || 'Failed to save profile.');
+      }
+    } catch (err: any) {
+      // Don't use console.error(err) directly as Next.js catches it and shows an error overlay in dev mode
+      const errMsg = err?.message || 'An error occurred while saving.';
+      console.log('Profile save error:', errMsg);
+      alert(`Failed to save: ${errMsg}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const phoneValidationRules: Record<string, { pattern: string, maxLength: number, placeholder: string }> = {
     '+91': { pattern: '[0-9]{10}', maxLength: 10, placeholder: 'Enter 10-digit number' },
@@ -57,7 +101,7 @@ export default function PersonalDetailsPage() {
       </div>
 
       {/* Form */}
-      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+      <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--foreground)] flex items-center gap-2">
@@ -66,6 +110,7 @@ export default function PersonalDetailsPage() {
             </label>
             <input
               type="text"
+              name="first_name"
               defaultValue={user?.first_name || ''}
               className="input-royal bg-transparent rounded-md"
               placeholder="Enter first name"
@@ -78,6 +123,7 @@ export default function PersonalDetailsPage() {
             </label>
             <input
               type="text"
+              name="last_name"
               defaultValue={user?.last_name || ''}
               className="input-royal bg-transparent rounded-md"
               placeholder="Enter last name"
@@ -93,12 +139,11 @@ export default function PersonalDetailsPage() {
             </label>
             <input
               type="email"
-              className="input-royal bg-transparent rounded-md"
-              pattern="^[a-zA-Z0-9._%+\-]+@gmail\.com$"
-              title="Please enter a valid @gmail.com address"
-              required
+              defaultValue={user?.email || ''}
+              className="input-royal bg-transparent rounded-md opacity-70 cursor-not-allowed"
+              readOnly
             />
-            <p className="text-xs text-[var(--muted-foreground)]">Only @gmail.com addresses are allowed</p>
+            <p className="text-xs text-[var(--muted-foreground)]">Email address cannot be changed</p>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--foreground)] flex items-center gap-2">
@@ -118,13 +163,13 @@ export default function PersonalDetailsPage() {
               </select>
               <input
                 type="tel"
-                defaultValue={user?.phone || ''}
+                name="phone"
+                defaultValue={user?.phone ? user.phone.replace(/^\+\d+\s/, '') : ''}
                 className="input-royal bg-transparent rounded-md flex-1"
                 placeholder={currentPhoneRules.placeholder}
                 pattern={currentPhoneRules.pattern}
                 maxLength={currentPhoneRules.maxLength}
                 title={`Please enter a valid ${currentPhoneRules.placeholder.toLowerCase()}`}
-                required
               />
             </div>
           </div>
@@ -136,7 +181,7 @@ export default function PersonalDetailsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               Gender
             </label>
-            <select className="input-royal bg-transparent rounded-md appearance-none">
+            <select name="gender" defaultValue={user?.gender || ''} className="input-royal bg-transparent rounded-md appearance-none">
               <option value="">Select Gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -150,6 +195,8 @@ export default function PersonalDetailsPage() {
             </label>
             <input
               type="date"
+              name="birthday"
+              defaultValue={user?.birthday ? new Date(user.birthday).toISOString().split('T')[0] : ''}
               className="input-royal bg-transparent rounded-md"
             />
           </div>
@@ -162,6 +209,8 @@ export default function PersonalDetailsPage() {
           </label>
           <input
             type="text"
+            name="address"
+            defaultValue={user?.address || ''}
             className="input-royal bg-transparent rounded-md"
             placeholder="Enter your address"
           />
@@ -175,6 +224,8 @@ export default function PersonalDetailsPage() {
             </label>
             <input
               type="text"
+              name="country"
+              defaultValue={user?.country || ''}
               className="input-royal bg-transparent rounded-md"
               placeholder="Enter country"
             />
@@ -186,6 +237,8 @@ export default function PersonalDetailsPage() {
             </label>
             <input
               type="text"
+              name="zipcode"
+              defaultValue={user?.zipcode || ''}
               className="input-royal bg-transparent rounded-md"
               placeholder="Enter zipcode"
             />
@@ -193,8 +246,8 @@ export default function PersonalDetailsPage() {
         </div>
 
         <div className="flex justify-end pt-4">
-          <button type="button" className="px-8 py-3 bg-[var(--maroon)] text-parchment text-sm uppercase tracking-widest hover:bg-[var(--maroon-deep)] transition-all rounded-md shadow-md">
-            Save Changes
+          <button type="submit" disabled={isSaving} className="px-8 py-3 bg-[var(--maroon)] text-parchment text-sm uppercase tracking-widest hover:bg-[var(--maroon-deep)] transition-all rounded-md shadow-md disabled:opacity-50">
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>

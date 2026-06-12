@@ -51,7 +51,15 @@ export default function LoginPage() {
         const res = await authApi.googleLogin(response.credential);
         if (res.success) {
           window.dispatchEvent(new Event('auth-change'));
-          router.push('/profile/personal-details');
+          
+          const params = new URLSearchParams(window.location.search);
+          const redirectUrl = params.get('redirect');
+          
+          if (redirectUrl && redirectUrl.startsWith('/')) {
+            router.push(redirectUrl);
+          } else {
+            router.push('/profile/personal-details');
+          }
         } else {
           throw new Error('Backend authentication failed');
         }
