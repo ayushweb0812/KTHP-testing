@@ -36,6 +36,9 @@ export interface Booking {
   service_charges: number;
   discount_amount: number;
   total_price: number;
+  amount_paid?: number;
+  balance_due?: number;
+  deposit_percent?: number;
   payment_status: string;
   status: string;
   cancellation_policy: string | null;

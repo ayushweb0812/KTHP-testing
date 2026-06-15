@@ -24,6 +24,7 @@ function BookingDetailModal({
   isDownloading: boolean;
 }) {
   const isPaid = booking.payment_status === 'paid' || booking.status === 'paid';
+  const isPartial = booking.payment_status === 'partial';
   const roomName = room?.name || "Heritage Chamber";
   const roomImage = room?.images?.[0];
 
@@ -97,11 +98,13 @@ function BookingDetailModal({
           <span className={`text-[10px] uppercase tracking-[0.28em] px-3 py-1 border ${
             isPaid
               ? "border-green-500/40 bg-green-50 text-green-700"
+              : isPartial
+              ? "border-blue-400/40 bg-blue-50 text-blue-600"
               : booking.status === "cancelled"
               ? "border-red-400/40 bg-red-50 text-red-600"
               : "border-[var(--gold)]/40 bg-[var(--gold)]/8 text-[var(--maroon)]"
           }`}>
-            {isPaid ? "Confirmed" : booking.status === "cancelled" ? "Cancelled" : "Pending Payment"}
+            {isPaid ? "Confirmed" : isPartial ? "Confirmed (Partial)" : booking.status === "cancelled" ? "Cancelled" : "Pending Payment"}
           </span>
           <span className="text-xs text-muted-foreground font-serif">
             Booked {fmt(booking.created_at)}
@@ -182,6 +185,18 @@ function BookingDetailModal({
                 <span className="text-xs uppercase tracking-widest text-[var(--maroon)]">Total</span>
                 <span className="text-display text-xl gold-text">₹{booking.total_price.toLocaleString()}</span>
               </div>
+              {isPartial && (
+                <div className="flex justify-between pt-1 font-medium">
+                  <span className="text-xs uppercase tracking-widest text-[var(--maroon)]">Paid (Deposit)</span>
+                  <span className="text-display text-xl gold-text">₹{(booking.amount_paid || 0).toLocaleString()}</span>
+                </div>
+              )}
+              {isPartial && (
+                <div className="flex justify-between pt-1 font-medium">
+                  <span className="text-xs uppercase tracking-widest text-[var(--maroon)]">Balance Due</span>
+                  <span className="text-display text-xl gold-text">₹{(booking.balance_due || 0).toLocaleString()}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -195,7 +210,7 @@ function BookingDetailModal({
               className="flex-1 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.28em] text-center hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)]"
               onClick={onClose}
             >
-              Pay Now →
+              {isPartial ? "Pay Balance →" : "Pay Now →"}
             </Link>
           )}
           {isPaid && (
@@ -307,8 +322,9 @@ export default function TripsPage() {
 
   const filteredBookings = bookings.filter(b => {
     const isPaid = b.payment_status === 'paid' || b.status === 'paid' || recentlyPaidIds.includes(b.id);
-    if (activeTab === 'Active') return !isPaid && b.status !== 'cancelled';
-    if (activeTab === 'Confirmed') return isPaid && b.status !== 'cancelled';
+    const isPartial = b.payment_status === 'partial';
+    if (activeTab === 'Active') return !isPaid && !isPartial && b.status !== 'cancelled';
+    if (activeTab === 'Confirmed') return (isPaid || isPartial) && b.status !== 'cancelled';
     if (activeTab === 'Cancelled') return b.status === 'cancelled';
     return true;
   });
@@ -374,6 +390,7 @@ export default function TripsPage() {
           <div className="space-y-5">
             {filteredBookings.map((booking) => {
               const isPaid = booking.payment_status === 'paid' || booking.status === 'paid' || recentlyPaidIds.includes(booking.id);
+              const isPartial = booking.payment_status === 'partial';
               const room = rooms[booking.room_id];
               const roomName = room?.name || "Heritage Chamber";
               const roomImage = room?.images?.[0];
@@ -405,8 +422,8 @@ export default function TripsPage() {
                         <p className="text-xs text-[var(--muted-foreground)]">Kila the heritage palace</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-xs border ${isPaid ? 'border-green-500 text-green-600' : booking.status === 'cancelled' ? 'border-red-400 text-red-500' : 'border-[var(--accent)] text-[var(--accent)]'}`}>
-                          {isPaid ? 'Confirmed' : booking.status === 'cancelled' ? 'Cancelled' : 'Pending'}
+                        <span className={`px-3 py-1 rounded-full text-xs border ${isPaid ? 'border-green-500 text-green-600' : isPartial ? 'border-blue-400 text-blue-500' : booking.status === 'cancelled' ? 'border-red-400 text-red-500' : 'border-[var(--accent)] text-[var(--accent)]'}`}>
+                          {isPaid ? 'Confirmed' : isPartial ? 'Confirmed (Partial)' : booking.status === 'cancelled' ? 'Cancelled' : 'Pending'}
                         </span>
                         <span className="text-xs text-[var(--muted-foreground)]">ID {booking.id}</span>
                       </div>
@@ -427,13 +444,17 @@ export default function TripsPage() {
                       </div>
                     </div>
 
-                    {/* Bottom row */}
                     <div className="flex flex-wrap justify-between items-center mt-4 gap-3">
                       <div className="text-sm font-medium">
-                        {isPaid ? "Amount paid:" : "Total:"}
+                        {isPaid ? "Amount paid:" : isPartial ? "Paid (Deposit):" : "Total:"}
                         <span className={`font-serif ml-1 ${isPaid ? "text-foreground" : "text-[var(--maroon)]"}`}>
-                          ₹{booking.total_price.toLocaleString()}
+                          ₹{isPartial ? (booking.amount_paid || 0).toLocaleString() : booking.total_price.toLocaleString()}
                         </span>
+                        {isPartial && (
+                          <span className="block text-xs text-[var(--muted-foreground)] mt-1 font-serif">
+                            Balance: ₹{(booking.balance_due || 0).toLocaleString()}
+                          </span>
+                        )}
                       </div>
 
                       {/* Action buttons as boxes */}
@@ -454,7 +475,7 @@ export default function TripsPage() {
                             className="px-4 py-1.5 bg-[var(--maroon)] text-parchment text-[10px] uppercase tracking-[0.22em] hover:bg-[var(--maroon-deep)] transition-colors shadow-sm flex items-center gap-1.5"
                           >
                             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
-                            Pay Now
+                            {isPartial ? "Pay Balance" : "Pay Now"}
                           </Link>
                         )}
                         <button

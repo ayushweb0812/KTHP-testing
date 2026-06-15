@@ -24,12 +24,40 @@ export interface VerifyPaymentPayload {
   razorpay_signature: string;
 }
 
+export interface PaymentStatusResponse {
+  success: boolean;
+  payment_status: string;
+  booking_status: string;
+  total_price: number;
+  amount_paid: number;
+  balance_due: number;
+  deposit_percent: number;
+  deposit_amount: number;
+  partial_payment_enabled: boolean;
+  payment_options?: {
+    allow_deposit: boolean;
+    allow_full: boolean;
+    allow_balance: boolean;
+    required_mode: string;
+    deposit_amount: number;
+    partial_payment_enabled: boolean;
+  };
+  payments: any[];
+}
+
 export const paymentApi = {
-  async initiatePayment(bookingId: number | string): Promise<PaymentInitiateResponse> {
+  async checkPaymentStatus(bookingId: number | string): Promise<PaymentStatusResponse> {
+    return fetchClient<PaymentStatusResponse>(`/api/payment/bookings/${bookingId}/status`, {
+      method: 'GET',
+      requireAuth: true,
+    });
+  },
+
+  async initiatePayment(bookingId: number | string, payload?: { payment_mode: string }): Promise<PaymentInitiateResponse> {
     return fetchClient<PaymentInitiateResponse>(`/api/payment/bookings/${bookingId}/initiate`, {
       method: 'POST',
       requireAuth: true,
-      body: JSON.stringify({}),
+      body: JSON.stringify(payload || {}),
     });
   },
 

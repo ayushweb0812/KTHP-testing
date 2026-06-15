@@ -4,15 +4,14 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { bookingsApi, Booking } from "@/lib/api/bookings";
 import { paymentApi } from "@/lib/api/payment";
+import { settingsApi } from "@/lib/api/settings";
 import { couponsApi, Coupon } from "@/lib/api/coupons";
 import { getAccessToken } from "@/lib/api/apiClient";
 import Script from "next/script";
 import { Ornament } from "@/components/site/Ornament";
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
 
-type PaymentMode = "full" | "partial";
-const DEPOSIT_OPTIONS = [30, 40, 50] as const;
-type DepositPct = (typeof DEPOSIT_OPTIONS)[number];
+type PaymentMode = "full" | "partial" | "balance";
 
 function daysBetween(dateStr: string): number {
   const target = new Date(dateStr);
@@ -39,7 +38,7 @@ export default function PaymentPage() {
 
   /* ─── payment mode ───────────────────────────── */
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("full");
-  const [depositPct, setDepositPct] = useState<DepositPct>(30);
+  const [paymentOptions, setPaymentOptions] = useState<any>(null);
 
   /* ─── payment state ──────────────────────────── */
   const [isInitiatingPayment, setIsInitiatingPayment] = useState(false);
@@ -48,7 +47,8 @@ export default function PaymentPage() {
 
   /* ─── derived ────────────────────────────────── */
   const daysUntilCheckIn = booking ? daysBetween(booking.check_in_date) : 0;
-  const isPartialEligible = daysUntilCheckIn >= 15;
+  const isPartialEligible = paymentOptions?.allow_deposit ?? false;
+  const isBalanceEligible = paymentOptions?.allow_balance ?? false;
 
   const grandTotal = booking?.total_price ?? 0;
   const alreadyPaid = booking?.payment_status === "paid" || booking?.payment_status === "partial";
@@ -64,8 +64,13 @@ export default function PaymentPage() {
   }, [appliedCoupon, grandTotal]);
 
   const adjustedTotal = Math.max(0, grandTotal - couponDiscount);
-  const depositAmount = Math.round(adjustedTotal * (depositPct / 100));
-  const amountToCharge = paymentMode === "partial" && isPartialEligible ? depositAmount : adjustedTotal;
+  const depositAmount = paymentOptions?.deposit_amount || 0;
+  const depositPercent = paymentOptions?.deposit_percent || 30;
+  const balanceDue = paymentOptions?.balance_due || adjustedTotal - depositAmount;
+  
+  let amountToCharge = adjustedTotal;
+  if (paymentMode === "partial" && isPartialEligible) amountToCharge = depositAmount;
+  if (paymentMode === "balance" && isBalanceEligible) amountToCharge = balanceDue;
 
   /* ─── load booking ───────────────────────────── */
   useEffect(() => {
@@ -78,13 +83,30 @@ export default function PaymentPage() {
 
     async function fetchBooking() {
       try {
-        const [res, couponsRes] = await Promise.all([
+        const [res, couponsRes, statusRes] = await Promise.all([
           bookingsApi.getBookingById(Number(bookingId)),
-          couponsApi.getCoupons().catch(() => ({ success: false, coupons: [] }))
+          couponsApi.getCoupons().catch(() => ({ success: false, coupons: [] })),
+          paymentApi.checkPaymentStatus(Number(bookingId)).catch(() => null)
         ]);
 
         if (res.success && res.booking) {
           setBooking(res.booking);
+          
+          if (statusRes && statusRes.success && statusRes.payment_options) {
+            setPaymentOptions({
+              ...statusRes.payment_options,
+              balance_due: statusRes.balance_due,
+              deposit_amount: statusRes.deposit_amount,
+              deposit_percent: statusRes.deposit_percent
+            });
+            if (statusRes.payment_options.allow_balance) {
+              setPaymentMode('balance');
+            } else if (statusRes.payment_options.allow_deposit) {
+              setPaymentMode('partial');
+            } else {
+              setPaymentMode('full');
+            }
+          }
           
           if (couponsRes.success && couponsRes.coupons) {
             setAvailableCoupons(couponsRes.coupons);
@@ -174,15 +196,13 @@ export default function PaymentPage() {
     setPaymentError("");
 
     try {
-      const paymentRes = await paymentApi.initiatePayment(booking.id);
+      const mode = paymentMode === "partial" ? "deposit" : paymentMode;
+      const paymentRes = await paymentApi.initiatePayment(booking.id, { payment_mode: mode });
 
       if (paymentRes.success && paymentRes.payment) {
         const { payment } = paymentRes;
 
-        const chargeAmountPaise =
-          paymentMode === "partial" && isPartialEligible
-            ? depositAmount * 100
-            : payment.amount_paise;
+        const chargeAmountPaise = payment.amount_paise;
 
         const options = {
           key: payment.razorpay_key,
@@ -192,7 +212,9 @@ export default function PaymentPage() {
           name: "Kila Heritage",
           description:
             paymentMode === "partial" && isPartialEligible
-              ? `Booking #${booking.id} — ${depositPct}% Deposit`
+              ? `Booking #${booking.id} — ${depositPercent}% Deposit`
+              : paymentMode === "balance" && isBalanceEligible
+              ? `Booking #${booking.id} — Balance Payment`
               : `Booking #${booking.id}`,
           prefill: {
             name: payment.customer.name,
@@ -286,7 +308,12 @@ export default function PaymentPage() {
             </p>
             {paymentMode === "partial" && isPartialEligible && (
               <p className="mt-3 text-sm font-serif text-[var(--maroon)] animate-fade-up animate-fade-up-delay-2 bg-[var(--gold)]/10 border border-[var(--gold)]/30 px-4 py-2">
-                ₹{depositAmount.toLocaleString()} deposit paid · Balance ₹{(adjustedTotal - depositAmount).toLocaleString()} due at check-in
+                ₹{depositAmount.toLocaleString()} deposit paid · Balance ₹{balanceDue.toLocaleString()} due at check-in
+              </p>
+            )}
+            {paymentMode === "balance" && isBalanceEligible && (
+              <p className="mt-3 text-sm font-serif text-[var(--maroon)] animate-fade-up animate-fade-up-delay-2 bg-[var(--gold)]/10 border border-[var(--gold)]/30 px-4 py-2">
+                Balance ₹{balanceDue.toLocaleString()} paid successfully
               </p>
             )}
             <div className="mt-8 animate-fade-up animate-fade-up-delay-3 flex flex-col items-center gap-3">
@@ -402,13 +429,35 @@ export default function PaymentPage() {
                     <h2 className="text-display text-xl text-[var(--maroon)]">Payment Option</h2>
                   </div>
                   <p className="text-xs text-muted-foreground mb-5 font-serif">
-                    {isPartialEligible
-                      ? `Your check-in is ${daysUntilCheckIn} days away — partial deposit available.`
-                      : `Check-in is within 15 days — full payment is required.`}
+                    {isBalanceEligible
+                      ? `Your remaining balance is due.`
+                      : isPartialEligible
+                      ? `Partial deposit is available.`
+                      : `Full payment is required.`}
                   </p>
 
                   <div className="space-y-3">
+                    {/* Balance */}
+                    {isBalanceEligible && (
+                      <label className={`flex items-start gap-4 p-4 border cursor-pointer transition-all duration-300 ${paymentMode === "balance" ? "border-[var(--maroon)] bg-[var(--maroon)]/5" : "border-[var(--gold)]/30 hover:border-[var(--gold)]/60"}`}>
+                        <div className="relative mt-0.5 shrink-0">
+                          <input type="radio" name="payMode" value="balance" checked={paymentMode === "balance"} onChange={() => setPaymentMode("balance")} className="sr-only" />
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMode === "balance" ? "border-[var(--maroon)]" : "border-[var(--gold)]/40"}`}>
+                            {paymentMode === "balance" && <div className="w-2.5 h-2.5 rounded-full bg-[var(--maroon)]" />}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-foreground">Pay Balance</p>
+                            <p className="text-display text-xl gold-text">₹{balanceDue.toLocaleString()}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 font-serif">Pay the remaining balance for this booking.</p>
+                        </div>
+                      </label>
+                    )}
+
                     {/* Full */}
+                    {!isBalanceEligible && paymentOptions?.allow_full && (
                     <label className={`flex items-start gap-4 p-4 border cursor-pointer transition-all duration-300 ${paymentMode === "full" ? "border-[var(--maroon)] bg-[var(--maroon)]/5" : "border-[var(--gold)]/30 hover:border-[var(--gold)]/60"}`}>
                       <div className="relative mt-0.5 shrink-0">
                         <input type="radio" name="payMode" value="full" checked={paymentMode === "full"} onChange={() => setPaymentMode("full")} className="sr-only" />
@@ -424,61 +473,51 @@ export default function PaymentPage() {
                         <p className="text-xs text-muted-foreground mt-1 font-serif">Pay the complete amount now. No balance due at check-in.</p>
                       </div>
                     </label>
+                    )}
 
                     {/* Partial */}
-                    <label className={`flex items-start gap-4 p-4 border transition-all duration-300 relative ${!isPartialEligible ? "border-[var(--gold)]/15 opacity-50 cursor-not-allowed" : paymentMode === "partial" ? "border-[var(--gold)] bg-[var(--gold)]/5 cursor-pointer" : "border-[var(--gold)]/30 hover:border-[var(--gold)]/60 cursor-pointer"}`}>
-                      <div className="relative mt-0.5 shrink-0">
-                        <input type="radio" name="payMode" value="partial" checked={paymentMode === "partial"} onChange={() => isPartialEligible && setPaymentMode("partial")} disabled={!isPartialEligible} className="sr-only" />
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMode === "partial" ? "border-[var(--gold)]" : "border-[var(--gold)]/40"}`}>
-                          {paymentMode === "partial" && <div className="w-2.5 h-2.5 rounded-full bg-[var(--gold)]" />}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-foreground">Partial Deposit</p>
-                            {!isPartialEligible && <span className="text-[9px] uppercase tracking-widest bg-[var(--gold)]/20 text-[var(--maroon)] px-2 py-0.5">Not available</span>}
+                    {!isBalanceEligible && paymentOptions?.allow_deposit && (
+                      <label className={`flex items-start gap-4 p-4 border transition-all duration-300 relative ${!isPartialEligible ? "border-[var(--gold)]/15 opacity-50 cursor-not-allowed" : paymentMode === "partial" ? "border-[var(--gold)] bg-[var(--gold)]/5 cursor-pointer" : "border-[var(--gold)]/30 hover:border-[var(--gold)]/60 cursor-pointer"}`}>
+                        <div className="relative mt-0.5 shrink-0">
+                          <input type="radio" name="payMode" value="partial" checked={paymentMode === "partial"} onChange={() => isPartialEligible && setPaymentMode("partial")} disabled={!isPartialEligible} className="sr-only" />
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMode === "partial" ? "border-[var(--gold)]" : "border-[var(--gold)]/40"}`}>
+                            {paymentMode === "partial" && <div className="w-2.5 h-2.5 rounded-full bg-[var(--gold)]" />}
                           </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground">Partial Deposit</p>
+                              {!isPartialEligible && <span className="text-[9px] uppercase tracking-widest bg-[var(--gold)]/20 text-[var(--maroon)] px-2 py-0.5">Not available</span>}
+                            </div>
+                            {paymentMode === "partial" && isPartialEligible && (
+                              <p className="text-display text-xl gold-text">₹{depositAmount.toLocaleString()}</p>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 font-serif">
+                            {isPartialEligible ? "Pay a deposit now, balance due at check-in." : "Partial payment is currently disabled."}
+                          </p>
+
                           {paymentMode === "partial" && isPartialEligible && (
-                            <p className="text-display text-xl gold-text">₹{depositAmount.toLocaleString()}</p>
+                            <div className="mt-4 space-y-3">
+                              <div className="grid grid-cols-2 gap-2 text-xs font-serif">
+                                <div className="p-2.5 bg-[var(--gold)]/10 border border-[var(--gold)]/20 text-center">
+                                  <p className="text-muted-foreground mb-0.5">Pay now ({depositPercent}%)</p>
+                                  <p className="text-[var(--maroon)] font-medium">₹{depositAmount.toLocaleString()}</p>
+                                </div>
+                                <div className="p-2.5 bg-[var(--gold)]/5 border border-[var(--gold)]/15 text-center">
+                                  <p className="text-muted-foreground mb-0.5">Due at check-in</p>
+                                  <p className="text-[var(--maroon)] font-medium">₹{balanceDue.toLocaleString()}</p>
+                                </div>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground font-serif">
+                                ⚠ Partial payment is indicative only. Balance must be settled at the property before check-in.
+                              </p>
+                            </div>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 font-serif">
-                          {isPartialEligible ? "Pay a deposit now, balance due at check-in." : "Available only for bookings 15+ days before check-in."}
-                        </p>
-
-                        {paymentMode === "partial" && isPartialEligible && (
-                          <div className="mt-4 space-y-3">
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--maroon)]">Choose deposit amount</p>
-                            <div className="flex gap-2">
-                              {DEPOSIT_OPTIONS.map((pct) => (
-                                <button
-                                  key={pct}
-                                  type="button"
-                                  onClick={() => setDepositPct(pct)}
-                                  className={`flex-1 py-2.5 text-xs uppercase tracking-widest border transition-all duration-200 ${depositPct === pct ? "bg-[var(--gold)] border-[var(--gold)] text-[var(--maroon-deep)] font-medium" : "border-[var(--gold)]/40 text-foreground hover:border-[var(--gold)]"}`}
-                                >
-                                  {pct}%
-                                </button>
-                              ))}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs font-serif">
-                              <div className="p-2.5 bg-[var(--gold)]/10 border border-[var(--gold)]/20 text-center">
-                                <p className="text-muted-foreground mb-0.5">Pay now</p>
-                                <p className="text-[var(--maroon)] font-medium">₹{depositAmount.toLocaleString()}</p>
-                              </div>
-                              <div className="p-2.5 bg-[var(--gold)]/5 border border-[var(--gold)]/15 text-center">
-                                <p className="text-muted-foreground mb-0.5">Due at check-in</p>
-                                <p className="text-[var(--maroon)] font-medium">₹{(adjustedTotal - depositAmount).toLocaleString()}</p>
-                              </div>
-                            </div>
-                            <p className="text-[10px] text-muted-foreground font-serif">
-                              ⚠ Partial payment is indicative only. Balance must be settled at the property before check-in.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </label>
+                      </label>
+                    )}
                   </div>
                 </div>
 
@@ -586,8 +625,13 @@ export default function PaymentPage() {
 
                 {paymentMode === "partial" && isPartialEligible && isPending && (
                   <div className="mt-2 p-3 bg-[var(--gold)]/10 border border-[var(--gold)]/25 text-xs font-serif text-center">
-                    <p className="text-[var(--maroon)] font-medium">Paying {depositPct}% deposit: ₹{depositAmount.toLocaleString()}</p>
-                    <p className="text-muted-foreground mt-0.5">Balance ₹{(adjustedTotal - depositAmount).toLocaleString()} at check-in</p>
+                    <p className="text-[var(--maroon)] font-medium">Paying {depositPercent}% deposit: ₹{depositAmount.toLocaleString()}</p>
+                    <p className="text-muted-foreground mt-0.5">Balance ₹{balanceDue.toLocaleString()} at check-in</p>
+                  </div>
+                )}
+                {paymentMode === "balance" && isBalanceEligible && (
+                  <div className="mt-2 p-3 bg-[var(--gold)]/10 border border-[var(--gold)]/25 text-xs font-serif text-center">
+                    <p className="text-[var(--maroon)] font-medium">Paying Balance: ₹{balanceDue.toLocaleString()}</p>
                   </div>
                 )}
               </div>
