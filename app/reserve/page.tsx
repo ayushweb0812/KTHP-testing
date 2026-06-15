@@ -79,54 +79,110 @@ export default function ReservePage() {
 
 function RoomsList() {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
 
-  useEffect(() => {
-    async function loadRooms() {
-      try {
-        const response = await roomsApi.getRooms();
-        if (response.success) {
-          setRooms(response.rooms);
-        } else {
-          setError("Failed to load rooms");
-        }
-      } catch (err) {
-        setError("Error loading rooms");
-      } finally {
-        setLoading(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [checkIn, setCheckIn] = useState(() => {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  });
+  const [checkOut, setCheckOut] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  });
+  const [guests, setGuests] = useState(2);
+
+  const handleSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+    setError("");
+    
+    try {
+      const response = await roomsApi.searchRooms({
+        check_in: checkIn,
+        check_out: checkOut,
+        guests: guests,
+      });
+      if (response.success) {
+        setRooms(response.rooms);
+        setHasSearched(true);
+      } else {
+        setError("Failed to load rooms");
       }
+    } catch (err) {
+      setError("Error loading rooms");
+    } finally {
+      setLoading(false);
     }
-    loadRooms();
-  }, []);
-
-  if (loading) {
-    return <div className="text-center py-10 gold-text">Loading rooms...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-10 text-[var(--maroon)]">{error}</div>;
-  }
+  };
 
   return (
-    <div className="space-y-6 animate-fade-up">
-      {rooms.map((r) => (
-        <RoomCard key={r.id} room={r} onOpenDetails={() => setSelectedRoomId(r.id)} />
-      ))}
-      <RoomDetailsModal 
-        isOpen={selectedRoomId !== null} 
-        onClose={() => setSelectedRoomId(null)} 
-        roomId={selectedRoomId} 
-      />
+    <div className="space-y-10 animate-fade-up">
+      <div className="bg-card border border-[var(--gold)]/30 p-6 shadow-[var(--shadow-royal)] max-w-4xl mx-auto">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Check In</label>
+            <input type="date" required value={checkIn} onChange={e => setCheckIn(e.target.value)} className="w-full bg-background border border-[var(--gold)]/30 px-4 py-3 text-sm focus:border-[var(--gold)] outline-none transition-colors" />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Check Out</label>
+            <input type="date" required value={checkOut} onChange={e => setCheckOut(e.target.value)} className="w-full bg-background border border-[var(--gold)]/30 px-4 py-3 text-sm focus:border-[var(--gold)] outline-none transition-colors" />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Guests</label>
+            <input type="number" min="1" max="10" required value={guests} onChange={e => setGuests(parseInt(e.target.value))} className="w-full bg-background border border-[var(--gold)]/30 px-4 py-3 text-sm focus:border-[var(--gold)] outline-none transition-colors" />
+          </div>
+          <div>
+            <button type="submit" disabled={loading} className="w-full px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)] disabled:opacity-50">
+              {loading ? "Searching..." : "Check Availability"}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {error && (
+        <div className="text-center py-10 text-[var(--maroon)]">{error}</div>
+      )}
+
+      {loading && !hasSearched && (
+        <div className="text-center py-10 gold-text">Searching for available rooms...</div>
+      )}
+
+      {hasSearched && !loading && rooms.length === 0 && (
+        <div className="text-center py-10 font-serif text-lg text-muted-foreground">
+          No rooms available for the selected dates.
+        </div>
+      )}
+
+      {hasSearched && rooms.length > 0 && (
+        <div className="space-y-6">
+          {rooms.map((r) => (
+            <RoomCard key={r.id} room={r} onOpenDetails={() => setSelectedRoomId(r.id)} checkIn={checkIn} checkOut={checkOut} guests={guests} />
+          ))}
+          <RoomDetailsModal 
+            isOpen={selectedRoomId !== null} 
+            onClose={() => setSelectedRoomId(null)} 
+            roomId={selectedRoomId} 
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-function RoomCard({ room, onOpenDetails }: { room: Room; onOpenDetails: () => void }) {
+function RoomCard({ room, onOpenDetails, checkIn, checkOut, guests }: { room: Room; onOpenDetails: () => void; checkIn?: string; checkOut?: string; guests?: number }) {
   const [imgIdx, setImgIdx] = useState(0);
 
   const images = room.images && room.images.length > 0 ? room.images : [];
+
+  const queryParams = new URLSearchParams();
+  if (checkIn) queryParams.append("checkIn", checkIn);
+  if (checkOut) queryParams.append("checkOut", checkOut);
+  if (guests) queryParams.append("adults", String(guests)); // assuming adults = guests for simplicity
+  const bookUrl = `/book/${room.id}?${queryParams.toString()}`;
 
   return (
     <article className="group bg-card border border-[var(--gold)]/30 hover:border-[var(--gold)] hover:shadow-[var(--shadow-royal)] transition-all duration-500 overflow-hidden">
@@ -201,7 +257,7 @@ function RoomCard({ room, onOpenDetails }: { room: Room; onOpenDetails: () => vo
           <div className="mt-1 text-display text-5xl gold-text leading-none">₹{room.price.toLocaleString()}</div>
           <p className="text-[11px] text-muted-foreground mt-2">per night · taxes extra</p>
           <div className="mt-6 px-3 py-2 bg-[oklch(0.45_0.13_150/0.12)] text-[oklch(0.32_0.13_150)] text-[10px] uppercase tracking-[0.2em]">✓ {room.available !== false ? "Available" : "Check availability"}</div>
-          <Link href={`/book/${room.id}`} className="mt-5 px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)]">
+          <Link href={bookUrl} className="mt-5 px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)]">
             Reserve →
           </Link>
           <button onClick={onOpenDetails} className="mt-2 text-[11px] uppercase tracking-[0.28em] text-[var(--gold)] hover:text-[var(--maroon)] transition-colors">View details</button>

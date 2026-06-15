@@ -217,7 +217,7 @@ export default async function HomePage() {
                     <h3 className="text-display text-4xl md:text-5xl mt-4 text-[var(--maroon)]">{r.name}</h3>
                     <Ornament className="mt-6 w-32 text-[var(--gold)]" />
                     <p className="mt-6 font-serif text-xl text-foreground/75 leading-relaxed">{r.text}</p>
-                    <Link href={`/book/${r.id}`} className="inline-block mt-8 text-xs uppercase tracking-[0.32em] text-[var(--maroon)] border-b border-[var(--gold)] pb-1 hover:text-[var(--gold)]">
+                    <Link href="/reserve" className="inline-block mt-8 text-xs uppercase tracking-[0.32em] text-[var(--maroon)] border-b border-[var(--gold)] pb-1 hover:text-[var(--gold)]">
                       Reserve this chamber →
                     </Link>
                   </div>

@@ -31,6 +31,7 @@ export default function PaymentPage() {
   const [error, setError] = useState("");
 
   /* ─── coupon ─────────────────────────────────── */
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponError, setCouponError] = useState("");
@@ -77,9 +78,46 @@ export default function PaymentPage() {
 
     async function fetchBooking() {
       try {
-        const res = await bookingsApi.getBookingById(Number(bookingId));
+        const [res, couponsRes] = await Promise.all([
+          bookingsApi.getBookingById(Number(bookingId)),
+          couponsApi.getCoupons().catch(() => ({ success: false, coupons: [] }))
+        ]);
+
         if (res.success && res.booking) {
           setBooking(res.booking);
+          
+          if (couponsRes.success && couponsRes.coupons) {
+            setAvailableCoupons(couponsRes.coupons);
+            
+            // Auto apply best coupon
+            const total = res.booking.total_price;
+            let best: Coupon | null = null;
+            let maxDiscount = 0;
+            const now = new Date();
+
+            for (const c of couponsRes.coupons) {
+              if (new Date(c.valid_until) < now) continue;
+              if (total < c.min_amount) continue;
+
+              let discount = 0;
+              if (c.discount_type === "percentage") {
+                discount = (total * c.discount_value) / 100;
+                if (c.max_discount) discount = Math.min(discount, c.max_discount);
+              } else {
+                discount = c.discount_value;
+              }
+
+              if (discount > maxDiscount) {
+                maxDiscount = discount;
+                best = c;
+              }
+            }
+
+            if (best) {
+              setAppliedCoupon(best);
+              setCouponInput(best.code);
+            }
+          }
         } else {
           setError("Booking not found.");
         }
@@ -319,14 +357,22 @@ export default function PaymentPage() {
                     </div>
                   ) : (
                     <div className="flex gap-3">
-                      <input
-                        type="text"
+                      <select
                         value={couponInput}
-                        onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(""); }}
-                        onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
-                        placeholder="Enter coupon code"
-                        className="flex-1 bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground text-sm tracking-widest placeholder:tracking-normal"
-                      />
+                        onChange={(e) => { setCouponInput(e.target.value); setCouponError(""); }}
+                        className="flex-1 bg-card border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground text-sm tracking-widest"
+                      >
+                        <option value="">Select a coupon</option>
+                        {availableCoupons.map((c) => {
+                          const now = new Date();
+                          const isValid = new Date(c.valid_until) >= now && grandTotal >= c.min_amount;
+                          return (
+                            <option key={c.id} value={c.code} disabled={!isValid}>
+                              {c.code} - {c.description} {isValid ? "" : "(Not eligible)"}
+                            </option>
+                          );
+                        })}
+                      </select>
                       <button
                         onClick={handleApplyCoupon}
                         disabled={couponLoading || !couponInput.trim()}

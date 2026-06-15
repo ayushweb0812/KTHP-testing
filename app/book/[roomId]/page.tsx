@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { authApi } from "@/lib/api/auth";
 import { roomsApi, Room } from "@/lib/api/rooms";
 import { bookingsApi, CreateBookingPayload, Booking } from "@/lib/api/bookings";
@@ -55,10 +55,12 @@ export default function BookRoomPage() {
   /* ─── step ───────────────────────────────────── */
   const [step, setStep] = useState<Step>(1);
 
+  const searchParams = useSearchParams();
+
   /* ─── step 1: guest info ─────────────────────── */
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [adults, setAdults] = useState<number | string>(1);
+  const [checkIn, setCheckIn] = useState(searchParams.get("checkIn") || "");
+  const [checkOut, setCheckOut] = useState(searchParams.get("checkOut") || "");
+  const [adults, setAdults] = useState<number | string>(searchParams.get("adults") || 1);
   const [children, setChildren] = useState<number | string>(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -67,6 +69,7 @@ export default function BookRoomPage() {
   const [phone, setPhone] = useState("");
 
   /* ─── step 2: coupon + payment mode ─────────── */
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponError, setCouponError] = useState("");
@@ -114,9 +117,10 @@ export default function BookRoomPage() {
 
     async function fetchData() {
       try {
-        const [roomRes, profileRes] = await Promise.all([
+        const [roomRes, profileRes, couponsRes] = await Promise.all([
           roomsApi.getRoomById(Number(roomId)),
-          authApi.getProfile().catch(() => ({ success: false, user: null }))
+          authApi.getProfile().catch(() => ({ success: false, user: null })),
+          couponsApi.getCoupons().catch(() => ({ success: false, coupons: [] }))
         ]);
 
         if (roomRes.success) setRoom(roomRes.room);
@@ -131,6 +135,10 @@ export default function BookRoomPage() {
             const phoneVal = u.phone.replace(/^\+\d+\s/, '');
             setPhone(phoneVal);
           }
+        }
+
+        if (couponsRes.success && couponsRes.coupons) {
+          setAvailableCoupons(couponsRes.coupons);
         }
       } catch {
         setError("Error loading details.");
@@ -185,6 +193,35 @@ export default function BookRoomPage() {
     e.preventDefault();
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (availableCoupons.length > 0 && !appliedCoupon) {
+      let best: Coupon | null = null;
+      let maxDiscount = 0;
+      const now = new Date();
+
+      for (const c of availableCoupons) {
+        if (new Date(c.valid_until) < now) continue;
+        if (baseTotal < c.min_amount) continue;
+
+        let discount = 0;
+        if (c.discount_type === "percentage") {
+          discount = (baseTotal * c.discount_value) / 100;
+          if (c.max_discount) discount = Math.min(discount, c.max_discount);
+        } else {
+          discount = c.discount_value;
+        }
+
+        if (discount > maxDiscount) {
+          maxDiscount = discount;
+          best = c;
+        }
+      }
+
+      if (best) {
+        setAppliedCoupon(best);
+        setCouponInput(best.code);
+      }
+    }
   };
 
   /* ─── step 2: confirm & create booking ──────── */
@@ -641,14 +678,22 @@ export default function BookRoomPage() {
                     </div>
                   ) : (
                     <div className="flex gap-3">
-                      <input
-                        type="text"
+                      <select
                         value={couponInput}
-                        onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(""); }}
-                        onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
-                        placeholder="Enter coupon code"
-                        className="flex-1 bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground text-sm tracking-widest placeholder:tracking-normal"
-                      />
+                        onChange={(e) => { setCouponInput(e.target.value); setCouponError(""); }}
+                        className="flex-1 bg-card border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground text-sm tracking-widest"
+                      >
+                        <option value="">Select a coupon</option>
+                        {availableCoupons.map((c) => {
+                          const now = new Date();
+                          const isValid = new Date(c.valid_until) >= now && baseTotal >= c.min_amount;
+                          return (
+                            <option key={c.id} value={c.code} disabled={!isValid}>
+                              {c.code} - {c.description} {isValid ? "" : "(Not eligible)"}
+                            </option>
+                          );
+                        })}
+                      </select>
                       <button
                         onClick={handleApplyCoupon}
                         disabled={couponLoading || !couponInput.trim()}
