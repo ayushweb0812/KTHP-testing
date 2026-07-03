@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import {
-  SITE_URL,
-  SITE_NAME,
-  SITE_NAME_SHORT,
-  DEFAULT_OG_IMAGE,
-} from "./site";
+
+const SITE_URL = "https://kilatheheritagepalace.com";
+const SITE_NAME = "Kila The Heritage Palace";
+const DEFAULT_OG_IMAGE = "/heritage/legacy/l3.webp";
 
 type PageMetaInput = {
   title: string;
@@ -61,6 +59,6 @@ export function pageMetadata({
       description,
       images: [ogImage],
     },
-    authors: [{ name: SITE_NAME_SHORT }],
+    authors: [{ name: "Kila Heritage Palace" }],
   };
 }
