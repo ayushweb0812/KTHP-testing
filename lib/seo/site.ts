@@ -19,8 +19,8 @@ export const CONTACT = {
   email:
     process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
     "heritage@kilatheheritagepalace.com",
-  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+917551234567",
-  phoneDisplay: process.env.NEXT_PUBLIC_CONTACT_PHONE_DISPLAY || "+91 (755) 123-4567",
+  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 9898203503",
+  phoneDisplay: process.env.NEXT_PUBLIC_CONTACT_PHONE_DISPLAY || "+91 9898203503",
   whatsapp:
     process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "917551234567",
   address: {
