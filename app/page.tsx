@@ -5,12 +5,32 @@ import { MoonPhases } from "@/components/site/MoonPhases";
 import RevealWrapper from "@/components/site/RevealWrapper";
 import { HeroSlideshow } from "@/components/site/HeroSlideshow";
 
+<<<<<<< Updated upstream
 export const metadata: Metadata = {
   title: "Kila — The Heritage Palace | 287 Years of Royal Legacy",
   description: "A living palace in Madhya Pradesh. Two centuries of unbroken royal lineage, four exclusive heritage suites, hosted personally by the royal family.",
   openGraph: { images: ["/heritage/legacy/l3.webp"] },
   twitter: { images: ["/heritage/legacy/l3.webp"] },
 };
+=======
+export const metadata: Metadata = pageMetadata({
+  title: "Heritage Palace & Boutique Stay in Satna, Madhya Pradesh",
+  description:
+    "Book direct at Kila The Heritage Palace — four exclusive heritage suites, palace pre-wedding shoots, and royal family hosting in Kothi, Satna. Est. 1738.",
+  path: "/",
+  ogImageAlt: "Kila The Heritage Palace — living heritage hotel in Satna, MP",
+  keywords: [
+    "Kila The Heritage Palace",
+    "heritage hotel in Madhya Pradesh",
+    "luxury palace stay",
+    "royal wedding venue",
+    "Kothi Satna",
+    "heritage resort",
+    "luxury accommodation Satna",
+    "royal heritage experience",
+  ],
+});
+>>>>>>> Stashed changes
 
 const legacyImages = [
   { src: "/heritage/legacy/l1.webp", title: "A Moment in History", caption: "Historic gathering at the palace entrance" },
