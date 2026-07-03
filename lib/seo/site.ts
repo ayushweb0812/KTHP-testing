@@ -1,13 +1,19 @@
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://kilatheheritagepalace.com";
 
-export const SITE_NAME = "Kila The Heritage Palace";
-export const SITE_NAME_SHORT = "Kila Heritage Palace";
+export const SITE_NAME = "Killa The Heritage Palace";
+export const SITE_NAME_SHORT = "Killa Heritage Palace";
 
 export const SITE_DESCRIPTION =
   "A 287-year-old living palace in Kothi, Satna, Madhya Pradesh. Four exclusive heritage suites, palace pre-wedding shoots, royal homestays, and direct booking with the royal family.";
 
-export const DEFAULT_OG_IMAGE = "/heritage/legacy/l3.webp";
+export const OG_IMAGES = {
+  home: "/home.png",
+  about: "/about.png",
+  reserve: "/reserve.png",
+} as const;
+
+export const DEFAULT_OG_IMAGE = OG_IMAGES.home;
 
 export const CONTACT = {
   email:

@@ -7,13 +7,16 @@ import { HeroSlideshow } from "@/components/site/HeroSlideshow";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { PageJsonLd } from "@/components/seo/PageJsonLd";
 import { homePageSchemas } from "@/lib/seo/schema";
+import { OG_IMAGES } from "@/lib/seo/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Heritage Palace & Boutique Stay in Satna, Madhya Pradesh",
   description:
-    "Book direct at Kila The Heritage Palace — four exclusive heritage suites, palace pre-wedding shoots, and royal family hosting in Kothi, Satna. Est. 1738.",
+    "Two centuries of royal heritage — book direct at Killa The Heritage Palace for four exclusive heritage suites, palace pre-wedding shoots, and royal family hospitality in Kothi, Satna.",
   path: "/",
-  ogImageAlt: "Kila The Heritage Palace — living heritage hotel in Satna, MP",
+  ogImage: OG_IMAGES.home,
+  ogImageAlt:
+    "Killa The Heritage Palace — illuminated heritage palace in Madhya Pradesh at night",
 });
 
 const legacyImages = [
