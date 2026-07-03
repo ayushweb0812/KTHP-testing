@@ -189,7 +189,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         <div className="mt-10 pt-6 border-t border-[color-mix(in_oklab,var(--gold)_20%,transparent)] w-full text-center">
           <p className="text-sm text-[var(--muted-foreground)]">
-            By signing in, you agree to the palace's <Link href="#" className="text-[var(--gold)] hover:underline">Terms of Service</Link> and <Link href="#" className="text-[var(--gold)] hover:underline">Privacy Policy</Link>.
+            By signing in, you agree to the palace's <Link href="/terms" className="text-[var(--gold)] hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-[var(--gold)] hover:underline">Privacy Policy</Link>.
           </p>
         </div>
         

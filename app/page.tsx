@@ -4,13 +4,17 @@ import { Ornament } from "@/components/site/Ornament";
 import { MoonPhases } from "@/components/site/MoonPhases";
 import RevealWrapper from "@/components/site/RevealWrapper";
 import { HeroSlideshow } from "@/components/site/HeroSlideshow";
+import { pageMetadata } from "@/lib/seo/metadata";
+import { PageJsonLd } from "@/components/seo/PageJsonLd";
+import { homePageSchemas } from "@/lib/seo/schema";
 
-export const metadata: Metadata = {
-  title: "Kila — The Heritage Palace | 287 Years of Royal Legacy",
-  description: "A living palace in Madhya Pradesh. Two centuries of unbroken royal lineage, four exclusive heritage suites, hosted personally by the royal family.",
-  openGraph: { images: ["/heritage/legacy/l3.webp"] },
-  twitter: { images: ["/heritage/legacy/l3.webp"] },
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Heritage Palace & Boutique Stay in Satna, Madhya Pradesh",
+  description:
+    "Book direct at Kila The Heritage Palace — four exclusive heritage suites, palace pre-wedding shoots, and royal family hosting in Kothi, Satna. Est. 1738.",
+  path: "/",
+  ogImageAlt: "Kila The Heritage Palace — living heritage hotel in Satna, MP",
+});
 
 const legacyImages = [
   { src: "/heritage/legacy/l1.webp", title: "A Moment in History", caption: "Historic gathering at the palace entrance" },
@@ -36,9 +40,9 @@ const essence = [
 ];
 
 const discover = [
-  { title: "Maihar Temple", sub: "Spiritual pilgrimage", text: "Sacred journey through centuries of devotion.", img: "/heritage/discover/s1.webp" },
-  { title: "Bandhavgarh", sub: "Wildlife expedition", text: "Wilderness adventure in pristine natural landscapes.", img: "/heritage/discover/s2.webp" },
-  { title: "Rural Heritage", sub: "Local traditions", text: "Authentic encounters with indigenous culture and craftsmanship.", img: "/heritage/discover/s3.webp" },
+  { title: "Maihar Temple", sub: "Spiritual pilgrimage", text: "Sacred journey through centuries of devotion.", img: "/heritage/discover/s1.webp", href: "/reserve" },
+  { title: "Bandhavgarh", sub: "Wildlife expedition", text: "Wilderness adventure in pristine natural landscapes.", img: "/heritage/discover/s2.webp", href: "/reserve" },
+  { title: "Rural Heritage", sub: "Local traditions", text: "Authentic encounters with indigenous culture and craftsmanship.", img: "/heritage/discover/s3.webp", href: "/about" },
 ];
 
 // Server Component — RevealWrapper is the only client boundary
@@ -70,6 +74,7 @@ export default async function HomePage() {
   const displayRooms = rooms.slice(0, 4);
   return (
     <RevealWrapper>
+      <PageJsonLd schemas={homePageSchemas()} />
       <div className="overflow-hidden">
         {/* HERO */}
         <section className="relative h-screen min-h-[720px] flex items-center justify-center text-center text-parchment overflow-hidden">
@@ -263,7 +268,7 @@ export default async function HomePage() {
             </div>
             <div className="grid md:grid-cols-3 gap-8">
               {discover.map((d) => (
-                <div key={d.title} className="group relative aspect-[3/4] overflow-hidden cursor-pointer">
+                <Link key={d.title} href={d.href} className="group relative aspect-[3/4] overflow-hidden cursor-pointer block">
                   <img src={d.img} alt={d.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.06_258/0.95)] via-[oklch(0.14_0.06_258/0.4)] to-transparent" />
                   <div className="absolute inset-0 p-8 flex flex-col justify-end text-parchment">
@@ -271,7 +276,7 @@ export default async function HomePage() {
                     <h3 className="text-display text-3xl mt-2">{d.title}</h3>
                     <p className="mt-3 font-serif text-base text-parchment/85 max-h-0 group-hover:max-h-32 overflow-hidden transition-all duration-700">{d.text}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

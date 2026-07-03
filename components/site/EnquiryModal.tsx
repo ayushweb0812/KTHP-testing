@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Ornament } from './Ornament';
 import { enquiryApi, EnquiryPayload } from '@/lib/api/enquiry';
+import { pushGtmEvent } from '@/lib/analytics/gtm';
 
 const COUNTRY_CONFIG = {
   "+91": { name: "IN (+91)", length: 10, placeholder: "10-digit number" },
@@ -44,6 +45,7 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
     if (isOpen) {
       setShow(true);
       document.body.style.overflow = 'hidden';
+      pushGtmEvent('enquiry_modal_open', { enquiry_type: enquiryType });
     } else {
       document.body.style.overflow = '';
       const timer = setTimeout(() => {
@@ -82,6 +84,7 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
       const res = await enquiryApi.submitEnquiry(payload);
       if (res.success) {
         setSuccess(true);
+        pushGtmEvent('enquiry_form_submit', { enquiry_type: enquiryType });
       } else {
         setError(res.message || 'Failed to submit enquiry.');
       }

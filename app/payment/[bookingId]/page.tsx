@@ -10,6 +10,7 @@ import { getAccessToken } from "@/lib/api/apiClient";
 import Script from "next/script";
 import { Ornament } from "@/components/site/Ornament";
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
+import { pushGtmEvent } from "@/lib/analytics/gtm";
 
 type PaymentMode = "full" | "partial" | "balance";
 
@@ -229,6 +230,7 @@ export default function PaymentPage() {
                 razorpay_signature: response.razorpay_signature,
               });
               if (verifyRes.success) {
+                pushGtmEvent("booking_complete", { booking_id: booking.id });
                 setShowSuccess(true);
                 setTimeout(() => router.push("/profile"), 3500);
               } else {

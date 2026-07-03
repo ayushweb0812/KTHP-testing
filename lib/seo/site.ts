@@ -1,0 +1,41 @@
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://kilatheheritagepalace.com";
+
+export const SITE_NAME = "Kila The Heritage Palace";
+export const SITE_NAME_SHORT = "Kila Heritage Palace";
+
+export const SITE_DESCRIPTION =
+  "A 287-year-old living palace in Kothi, Satna, Madhya Pradesh. Four exclusive heritage suites, palace pre-wedding shoots, royal homestays, and direct booking with the royal family.";
+
+export const DEFAULT_OG_IMAGE = "/heritage/legacy/l3.webp";
+
+export const CONTACT = {
+  email:
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
+    "heritage@kilatheheritagepalace.com",
+  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+917551234567",
+  phoneDisplay: process.env.NEXT_PUBLIC_CONTACT_PHONE_DISPLAY || "+91 (755) 123-4567",
+  whatsapp:
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "917551234567",
+  address: {
+    street: "1 Kila Kothi, Near Kila Road, Kothi",
+    locality: "Kothi, Satna",
+    region: "Madhya Pradesh",
+    country: "IN",
+    postalCode: process.env.NEXT_PUBLIC_HOTEL_POSTAL || "485001",
+  },
+};
+
+export const SOCIAL = {
+  tripAdvisor:
+    process.env.NEXT_PUBLIC_TRIPADVISOR_URL ||
+    "https://www.tripadvisor.in/Hotel-Kila_Kothi_Satna",
+  instagram:
+    process.env.NEXT_PUBLIC_INSTAGRAM_URL ||
+    "https://www.instagram.com/kilatheheritagepalace",
+};
+
+export const HOTEL_GEO = {
+  latitude: process.env.NEXT_PUBLIC_HOTEL_LAT || "24.5693",
+  longitude: process.env.NEXT_PUBLIC_HOTEL_LNG || "80.7810",
+};

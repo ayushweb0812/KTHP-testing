@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 const IMAGES = [
   "/Hero screen/image1.png",
@@ -15,18 +16,22 @@ export function HeroSlideshow() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % IMAGES.length);
-    }, 6000); // Change image every 6 seconds
+    }, 6000);
     return () => clearInterval(timer);
   }, []);
 
   return (
     <div className="absolute inset-0 bg-black overflow-hidden">
       {IMAGES.map((src, idx) => (
-        <img
+        <Image
           key={src}
           src={src}
-          alt={`Kila Heritage Palace Slide ${idx + 1}`}
-          className={`absolute inset-0 w-full h-full object-cover ken-burns transition-opacity duration-[2000ms] ease-in-out ${
+          alt={`Kila The Heritage Palace — heritage palace in Satna, slide ${idx + 1}`}
+          fill
+          priority={idx === 0}
+          quality={80}
+          sizes="100vw"
+          className={`absolute inset-0 object-cover ken-burns transition-opacity duration-[2000ms] ease-in-out ${
             idx === currentIndex ? "opacity-100" : "opacity-0"
           }`}
         />

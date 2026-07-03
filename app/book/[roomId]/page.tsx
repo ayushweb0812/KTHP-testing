@@ -12,6 +12,7 @@ import Script from "next/script";
 import { Ornament } from "@/components/site/Ornament";
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { RoomDetailsModal } from "@/components/site/RoomDetailsModal";
+import { pushGtmEvent } from "@/lib/analytics/gtm";
 
 const COUNTRY_CONFIG = {
   "+91": { name: "IN (+91)", length: 10, placeholder: "10-digit number" },
@@ -303,6 +304,7 @@ export default function BookRoomPage() {
                 razorpay_signature: response.razorpay_signature,
               });
               if (verifyRes.success) {
+                pushGtmEvent("booking_complete", { booking_id: bookingId });
                 setShowSuccess(true);
                 setTimeout(() => router.push("/profile"), 3500);
               } else {

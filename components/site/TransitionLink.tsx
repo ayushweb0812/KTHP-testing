@@ -3,6 +3,7 @@
 import Link, { LinkProps } from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import React from "react";
+import { pushGtmEvent } from "@/lib/analytics/gtm";
 
 interface TransitionLinkProps extends Omit<LinkProps, "href"> {
   children: React.ReactNode;
@@ -34,6 +35,10 @@ export function TransitionLink({ children, href, className, onClick, ...props }:
     
     e.preventDefault();
     if (onClick) onClick(e);
+
+    if (href === "/reserve" || href.startsWith("/book")) {
+      pushGtmEvent("reserve_click", { link_url: href });
+    }
 
     // If we're already on the destination page, just scroll to top
     if (pathname === href) {
