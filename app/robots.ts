@@ -12,6 +12,6 @@ export default function robots(): MetadataRoute.Robots {
         "/book/",
       ],
     },
-    sitemap: "https://kilatheheritagepalace.vercel.app/sitemap.xml",
+    sitemap: "https://kilatheheritagepalace.com/sitemap.xml",
   };
 }
