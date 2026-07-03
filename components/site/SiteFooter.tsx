@@ -27,7 +27,7 @@ export function SiteFooter() {
           </div>
           <div className="sm:text-center">
             <p className="eyebrow">Telephone</p>
-            <p className="font-display text-xl mt-1">+91 (755) 123-4567</p>
+            <p className="font-display text-xl mt-1">+91 9898203503</p>
             <p className="text-parchment/60 text-xs mt-1">Direct line to guest relations</p>
           </div>
           <div className="sm:text-right">
@@ -51,9 +51,22 @@ export function SiteFooter() {
               </div>
             </div>
           </Link>
-          <div className="flex gap-8 text-xs uppercase tracking-[0.28em] text-parchment/70">
-            <Link href="/" className="hover:text-[var(--gold)]">Home</Link>
-            <Link href="/about" className="hover:text-[var(--gold)]">Heritage</Link>
+          <div className="flex gap-8 text-xs uppercase tracking-[0.28em] text-parchment/70 items-center">
+            <Link href="/" className="hover:text-[var(--gold)] transition-colors">Home</Link>
+            <Link href="/about" className="hover:text-[var(--gold)] transition-colors">Heritage</Link>
+            <a 
+              href="https://www.instagram.com/kilatheheritagepalacekothi/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-[var(--gold)] transition-colors"
+              aria-label="Instagram"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+              </svg>
+            </a>
           </div>
           <p className="text-xs text-parchment/50">© {new Date().getFullYear()} Kila Heritage Palace</p>
         </div>
