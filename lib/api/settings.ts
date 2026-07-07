@@ -5,6 +5,8 @@ export interface PaymentSettingsResponse {
   settings: {
     partial_payment_enabled: boolean;
     deposit_percent: number;
+    service_charge: number;
+    cancellation_window_days: number;
   };
 }
 

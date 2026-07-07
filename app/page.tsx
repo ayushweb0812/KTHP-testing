@@ -73,8 +73,8 @@ export default async function HomePage() {
     ];
   }
 
-  // Cap at 4 rooms to match the original design intent
-  const displayRooms = rooms.slice(0, 4);
+  // Cap at 3 rooms to match the original design intent
+  const displayRooms = rooms.slice(0, 3);
   return (
     <RevealWrapper>
       <PageJsonLd schemas={homePageSchemas()} />
@@ -231,6 +231,11 @@ export default async function HomePage() {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-20 text-center">
+              <Link href="/reserve" className="inline-block px-10 py-4 border border-[var(--gold)] text-[var(--maroon)] text-xs uppercase tracking-[0.36em] hover:bg-[var(--gold)] transition-all duration-500">
+                View All Rooms
+              </Link>
             </div>
           </div>
         </section>

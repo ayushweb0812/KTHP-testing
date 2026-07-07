@@ -3,10 +3,12 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-
+import { usePathname } from "next/navigation";
 export default function Template({ children }: { children: React.ReactNode }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const pathname = usePathname();
 
   useGSAP(() => {
     const tl = gsap.timeline();
@@ -51,7 +53,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("page-exit", handleExit);
     };
-  });
+  }, { dependencies: [pathname] });
 
   return (
     <>

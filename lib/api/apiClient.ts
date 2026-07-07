@@ -69,6 +69,7 @@ export const fetchClient = async <T>(
   };
 
   let mergedOptions: RequestInit = {
+    cache: 'no-store',
     ...customOptions,
     headers: getHeadersWithToken(),
   };
@@ -118,7 +119,9 @@ export const fetchClient = async <T>(
     if (response.status === 401) {
       removeAccessToken();
       if (typeof window !== 'undefined') {
-        window.location.href = '/login?session_expired=true';
+        const currentUrl = window.location.pathname + window.location.search;
+        sessionStorage.setItem('auth_return_url', currentUrl);
+        window.location.href = `/login?session_expired=true&redirect=${encodeURIComponent(currentUrl)}`;
       }
     }
 

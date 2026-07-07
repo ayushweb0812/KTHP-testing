@@ -78,6 +78,7 @@ export default function PaymentPage() {
     const token = getAccessToken();
     if (!token) { 
       const currentUrl = window.location.pathname + window.location.search;
+      sessionStorage.setItem('auth_return_url', currentUrl);
       router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
       return; 
     }

@@ -52,10 +52,19 @@ export default function LoginPage() {
         if (res.success) {
           window.dispatchEvent(new Event('auth-change'));
           
-          const params = new URLSearchParams(window.location.search);
-          const redirectUrl = params.get('redirect');
+          let redirectUrl = null;
+          
+          if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            redirectUrl = params.get('redirect');
+            if (!redirectUrl) {
+              redirectUrl = sessionStorage.getItem('auth_return_url');
+            }
+          }
           
           if (redirectUrl && redirectUrl.startsWith('/')) {
+            sessionStorage.removeItem('auth_return_url');
+            // Do NOT remove auth_booking_context here, let the destination page read it first.
             router.push(redirectUrl);
           } else {
             router.push('/profile/personal-details');

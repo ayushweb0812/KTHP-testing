@@ -28,12 +28,14 @@ export default function ProfileShell({
             setUser(res.user);
           } else {
             const currentUrl = window.location.pathname + window.location.search;
+            sessionStorage.setItem('auth_return_url', currentUrl);
             router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
           }
         }
       } catch (err: any) {
         if (mounted) {
           const currentUrl = window.location.pathname + window.location.search;
+          sessionStorage.setItem('auth_return_url', currentUrl);
           router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
         }
       } finally {
@@ -74,60 +76,103 @@ export default function ProfileShell({
 
   return (
     <>
-      <div className="min-h-screen paper-grain py-24 px-4 relative overflow-hidden flex justify-center">
-        <div className="absolute inset-0 bg-[var(--gradient-vignette)] pointer-events-none" />
-        
-        <div className="relative z-10 w-full max-w-6xl mt-12 flex flex-col md:flex-row gap-8">
+      <div className="min-h-screen paper-grain bg-[var(--background)]">
+        {/* Hero Banner */}
+        <div className="relative h-[300px] md:h-[400px] w-full flex flex-col items-center justify-center text-center px-4 overflow-hidden mt-20">
+          <div className="absolute inset-0 z-0">
+            <img src="/Hero screen/image1.png" alt="Palace Exterior" className="w-full h-full object-cover object-center" />
+            <div className="absolute inset-0 bg-black/50" />
+          </div>
           
-          {/* Sidebar */}
-          <div className="w-full md:w-64 flex-shrink-0">
-            {/* Profile Card Summary */}
-            <div className="mb-6 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-[var(--maroon)] text-[var(--gold)] flex items-center justify-center text-2xl font-serif mb-3 shadow-[var(--shadow-gold)]">
-                {user.first_name ? user.first_name[0].toUpperCase() : 'G'}
+          <div className="relative z-10 animate-fade-up">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--gold)] mb-3 flex items-center justify-center gap-4 before:h-[1px] before:w-8 before:bg-[var(--gold)] after:h-[1px] after:w-8 after:bg-[var(--gold)]">
+              Your Account
+            </p>
+            <h1 className="text-display text-4xl md:text-5xl lg:text-6xl text-parchment capitalize mb-3">
+              {pathname === '/profile/trips' ? 'My Bookings' : 
+               pathname === '/profile/settings' ? 'Settings' : 
+               pathname === '/profile/payment-account' ? 'Payment Account' : 
+               'Personal Details'}
+            </h1>
+            {pathname === '/profile/trips' ? (
+              <p className="text-sm md:text-base text-parchment/90 font-medium tracking-wide mt-2">
+                Every reservation, every receipt — kept with the care of a palace ledger.
+              </p>
+            ) : pathname === '/profile/settings' ? (
+              <p className="text-sm md:text-base text-parchment/90 font-medium tracking-wide mt-2">
+                Refine how the palace remembers and reaches you.
+              </p>
+            ) : (
+              <p className="text-sm md:text-base text-gray-300 font-serif max-w-xl mx-auto mt-2">
+                Manage your profile and stay preferences
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            
+            {/* Left Sidebar (Profile Summary) */}
+            {pathname !== '/profile/trips' && pathname !== '/profile/settings' && (
+              <div className="w-full md:w-80 flex-shrink-0">
+                <div className="bg-[var(--card)] border border-[var(--gold)]/20 p-8 shadow-sm flex flex-col items-center relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--gold)]/50" />
+                  
+                  {/* Avatar */}
+                  <div className="relative mb-4 mt-2">
+                    <div className="w-24 h-24 rounded-full bg-[#f4ebd0] border border-[var(--gold)]/30 text-[var(--maroon)] flex items-center justify-center text-3xl font-serif shadow-sm">
+                      {user ? ([user.first_name, user.last_name].filter(n => n && n !== 'null').map(n => n[0]).join('').toUpperCase() || 'U') : 'U'}
+                    </div>
+                    <button className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-[var(--gold)]/30 rounded-full flex items-center justify-center text-[var(--gold)] shadow-sm hover:bg-[var(--gold)]/5 transition-colors">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    </button>
+                  </div>
+
+                  <h2 className="text-2xl font-serif text-[var(--foreground)] mb-2 mt-2">
+                    {user ? ([user.first_name, user.last_name].filter(n => n && n !== 'null').join(' ') || 'Guest User') : 'Guest User'}
+                  </h2>
+                  <p className="text-[11px] text-[var(--muted-foreground)] mb-6">
+                    Member Since May 2025
+                  </p>
+                  
+                  <div className="flex items-center gap-2 text-sm text-[var(--foreground)] mb-8">
+                    <span className="w-2 h-2 rounded-full bg-[var(--gold)]"></span>
+                    2 Stays Completed
+                  </div>
+
+                  {/* Recent Stay */}
+                  <div className="w-full border border-[var(--gold)]/15 p-5 relative mt-4">
+                     <p className="text-[10px] text-[var(--muted-foreground)] tracking-widest absolute -top-[9px] left-4 bg-[var(--card)] px-2">Recent Stay</p>
+                     
+                     <div className="flex gap-4 items-center mb-6 pt-2">
+                       <div className="w-14 h-14 bg-[#f4ebd0] shrink-0" />
+                       <div>
+                         <h4 className="font-serif text-sm text-[var(--foreground)]">Royal Heritage Suite</h4>
+                         <p className="text-[10px] text-[var(--muted-foreground)] mt-1">14 - 17 June 2026</p>
+                         <Link href="/profile/trips" className="text-[10px] text-[var(--gold)] mt-2 inline-block">View Stay &rarr;</Link>
+                       </div>
+                     </div>
+
+                     <div className="flex gap-4 items-center">
+                       <div className="w-14 h-14 bg-[#f4ebd0] shrink-0" />
+                       <div>
+                         <h4 className="font-serif text-sm text-[var(--foreground)]">Royal Heritage Suite</h4>
+                         <p className="text-[10px] text-[var(--muted-foreground)] mt-1">14 - 17 June 2026</p>
+                         <Link href="/profile/trips" className="text-[10px] text-[var(--gold)] mt-2 inline-block">View Stay &rarr;</Link>
+                       </div>
+                     </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-lg font-serif text-[var(--foreground)]">{user.first_name} {user.last_name}</h3>
+            )}
+
+            {/* Main Content Area */}
+            <div className="flex-grow w-full min-h-[600px]">
+              {children}
             </div>
 
-            {/* Navigation Links */}
-            <nav className="bg-[var(--card)] rounded-xl shadow-[var(--shadow-royal)] border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] overflow-hidden">
-              <ul className="flex flex-col py-2">
-                {navLinks.map((link) => {
-                  const isActive = pathname === link.href || pathname?.startsWith(`${link.href}/`);
-                  return (
-                    <li key={link.name}>
-                      <Link 
-                        href={link.href}
-                        className={`flex items-center gap-3 px-6 py-4 text-sm transition-colors duration-300 ${isActive ? 'bg-[var(--gold)]/10 text-[var(--gold)] border-r-4 border-[var(--gold)]' : 'text-[var(--foreground)] hover:bg-[var(--gold)]/5 hover:text-[var(--gold)] border-r-4 border-transparent'}`}
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d={link.icon} />
-                        </svg>
-                        {link.name}
-                      </Link>
-                    </li>
-                  );
-                })}
-                <li>
-                  <button 
-                    onClick={() => setShowLogoutConfirm(true)}
-                    className="w-full flex items-center gap-3 px-6 py-4 text-sm text-[var(--muted-foreground)] hover:bg-red-500/5 hover:text-red-500 border-r-4 border-transparent transition-colors duration-300 mt-4 border-t border-[color-mix(in_oklab,var(--gold)_15%,transparent)]"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                  </button>
-                </li>
-              </ul>
-            </nav>
           </div>
-
-          {/* Main Content Area */}
-          <div className="flex-grow bg-[var(--card)] rounded-xl shadow-[var(--shadow-royal)] border border-[color-mix(in_oklab,var(--gold)_30%,transparent)] min-h-[600px]">
-            {children}
-          </div>
-
         </div>
       </div>
 

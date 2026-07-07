@@ -1,92 +1,132 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
+
+// Reusable toggle component
+function Toggle({ isOn, onToggle }: { isOn: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`w-10 h-5 rounded-full relative flex items-center px-0.5 transition-colors duration-300 ${
+        isOn ? 'bg-[#cba052]' : 'bg-gray-200'
+      }`}
+    >
+      <div
+        className={`w-4 h-4 bg-white rounded-full absolute transition-transform duration-300 shadow-sm ${
+          isOn ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
 
 export default function SettingsPage() {
+  const [notifications, setNotifications] = useState({
+    reservations: true,
+    offers: true,
+    events: true,
+    sms: false,
+  });
+
   return (
-    <div className="p-8 md:p-10 animate-fade-up">
-      {/* Page Header */}
-      <div className="mb-8 border-b border-[var(--gold)]/20 pb-6">
-        <h2 className="text-2xl font-serif text-[var(--foreground)]">Settings</h2>
-        <p className="text-sm text-[var(--muted-foreground)] mt-2">Manage your account security, communication preferences, and data display settings here.</p>
+    <div className="animate-fade-up w-full max-w-3xl mx-auto pb-20 px-4 md:px-0">
+      
+      {/* SECTION 1: Notifications */}
+      <div className="flex flex-col items-center mt-12 mb-10">
+        <p className="text-[9px] uppercase tracking-[0.3em] text-[var(--gold)] mb-3">
+          NOTIFICATIONS
+        </p>
+        <h2 className="text-3xl font-serif text-[var(--foreground)] uppercase tracking-wide mb-6">
+          HOW WE REACH YOU
+        </h2>
+        <div className="w-16 h-[1px] bg-[var(--gold)]/40 mb-10"></div>
+        
+        <div className="w-full bg-white border border-[var(--gold)]/20 shadow-sm flex flex-col px-8">
+          
+          <div className="flex justify-between items-center py-6 border-b border-[var(--gold)]/10">
+            <span className="text-sm text-[var(--muted-foreground)] font-serif">Reservation confirmations &amp; reminders</span>
+            <Toggle 
+              isOn={notifications.reservations} 
+              onToggle={() => setNotifications(s => ({ ...s, reservations: !s.reservations }))} 
+            />
+          </div>
+
+          <div className="flex justify-between items-center py-6 border-b border-[var(--gold)]/10">
+            <span className="text-sm text-[var(--muted-foreground)] font-serif">Exclusive offers from Kila</span>
+            <Toggle 
+              isOn={notifications.offers} 
+              onToggle={() => setNotifications(s => ({ ...s, offers: !s.offers }))} 
+            />
+          </div>
+
+          <div className="flex justify-between items-center py-6 border-b border-[var(--gold)]/10">
+            <span className="text-sm text-[var(--muted-foreground)] font-serif">Cultural events at the palace</span>
+            <Toggle 
+              isOn={notifications.events} 
+              onToggle={() => setNotifications(s => ({ ...s, events: !s.events }))} 
+            />
+          </div>
+
+          <div className="flex justify-between items-center py-6">
+            <span className="text-sm text-[var(--muted-foreground)] font-serif">SMS alerts</span>
+            <Toggle 
+              isOn={notifications.sms} 
+              onToggle={() => setNotifications(s => ({ ...s, sms: !s.sms }))} 
+            />
+          </div>
+          
+        </div>
       </div>
 
-      <div className="space-y-12">
-        {/* Remove Account Section */}
-        <div>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
-              <h3 className="font-medium text-[var(--foreground)] mb-1">Remove Account</h3>
-              <p className="text-sm text-[var(--muted-foreground)]">
-                Delete your account through settings for complete removal of your data from the system.
-              </p>
+      {/* SECTION 2: Security */}
+      <div className="flex flex-col items-center mt-20 mb-10">
+        <p className="text-[9px] uppercase tracking-[0.3em] text-[var(--gold)] mb-3">
+          SECURITY
+        </p>
+        <h2 className="text-3xl font-serif text-[var(--foreground)] uppercase tracking-wide mb-6">
+          ACCOUNT &amp; PRIVACY
+        </h2>
+        <div className="w-16 h-[1px] bg-[var(--gold)]/40 mb-10"></div>
+        
+        <div className="w-full bg-white border border-[var(--gold)]/20 shadow-sm flex flex-col px-8">
+          
+          <div className="flex justify-between items-center py-6 border-b border-[var(--gold)]/10">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[13px] text-[var(--foreground)] font-serif">Password</span>
+              <span className="text-[11px] text-[var(--muted-foreground)] font-serif italic">Last changed 4 months ago</span>
             </div>
-            <button className="whitespace-nowrap px-6 py-2 border border-red-500 text-red-500 bg-transparent text-sm font-medium hover:bg-red-500 hover:text-white transition-colors rounded-md">
-              Delete Account
+            <button className="text-[10px] uppercase tracking-widest text-[var(--gold)] font-medium hover:text-[#b58b44] transition-colors">
+              UPDATE
             </button>
           </div>
-        </div>
 
-        {/* Divider */}
-        <div className="border-t border-[color-mix(in_oklab,var(--gold)_30%,transparent)]" />
-
-        {/* Preferences & Display Section */}
-        <div>
-          <h2 className="text-xl font-serif text-[var(--foreground)] mb-8">Preferences & Display</h2>
-          
-          <div className="space-y-8">
-            {/* Currency */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div>
-                <h3 className="font-medium text-[var(--foreground)] mb-1">Default Currency</h3>
-                <p className="text-sm text-[var(--muted-foreground)]">
-                  Set the preferred currency for displaying room rates and transaction costs.
-                </p>
-              </div>
-              <div className="w-full md:w-64">
-                <select className="w-full input-royal bg-transparent rounded-md appearance-none bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20fill=%22none%22%20stroke=%22%23cba052%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20stroke-width=%222%22%20viewBox=%220%200%2024%2024%22><path%20d=%22M6%209l6%206%206-6%22/></svg>')] bg-no-repeat bg-[position:right_1rem_center] pr-10">
-                  <option value="INR">₹ INR</option>
-                  <option value="USD">$ USD</option>
-                  <option value="EUR">€ EUR</option>
-                </select>
-              </div>
+          <div className="flex justify-between items-center py-6">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[13px] text-[var(--foreground)] font-serif">Two-factor authentication</span>
+              <span className="text-[11px] text-[var(--muted-foreground)] font-serif italic">Add an extra layer of protection</span>
             </div>
-
-            {/* Language */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div>
-                <h3 className="font-medium text-[var(--foreground)] mb-1">Language Preference</h3>
-                <p className="text-sm text-[var(--muted-foreground)]">
-                  Select the preferred language for the website interface.
-                </p>
-              </div>
-              <div className="w-full md:w-64">
-                <select className="w-full input-royal bg-transparent rounded-md appearance-none bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20fill=%22none%22%20stroke=%22%23cba052%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20stroke-width=%222%22%20viewBox=%220%200%2024%2024%22><path%20d=%22M6%209l6%206%206-6%22/></svg>')] bg-no-repeat bg-[position:right_1rem_center] pr-10">
-                  <option value="en">English</option>
-                  <option value="hi">Hindi</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Date Format */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div>
-                <h3 className="font-medium text-[var(--foreground)] mb-1">Date Format</h3>
-                <p className="text-sm text-[var(--muted-foreground)]">
-                  Choose how dates are displayed across the site.
-                </p>
-              </div>
-              <div className="w-full md:w-64">
-                <select className="w-full input-royal bg-transparent rounded-md appearance-none bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20fill=%22none%22%20stroke=%22%23cba052%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20stroke-width=%222%22%20viewBox=%220%200%2024%2024%22><path%20d=%22M6%209l6%206%206-6%22/></svg>')] bg-no-repeat bg-[position:right_1rem_center] pr-10">
-                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                </select>
-              </div>
-            </div>
+            <button className="text-[10px] uppercase tracking-widest text-[var(--gold)] font-medium hover:text-[#b58b44] transition-colors">
+              ENABLE
+            </button>
           </div>
+          
         </div>
       </div>
+
+      {/* Divider and Close Account */}
+      <div className="mt-24 pt-10 border-t border-[var(--gold)]/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h3 className="text-xl font-serif text-[var(--foreground)] mb-1">Close your account</h3>
+          <p className="text-[11px] text-[var(--muted-foreground)] font-serif italic">
+            Your reviews and history will be removed from Kila.
+          </p>
+        </div>
+        <button className="px-6 py-2.5 border border-[#cc4b4b]/60 text-[#cc4b4b] bg-white text-[10px] uppercase tracking-widest font-medium hover:border-[#cc4b4b] transition-colors shadow-sm">
+          CLOSE ACCOUNT
+        </button>
+      </div>
+
     </div>
   );
 }

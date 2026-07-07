@@ -8,6 +8,7 @@ import { bookingsApi, CreateBookingPayload, Booking } from "@/lib/api/bookings";
 import { paymentApi } from "@/lib/api/payment";
 import { couponsApi, Coupon } from "@/lib/api/coupons";
 import { getAccessToken } from "@/lib/api/apiClient";
+import { settingsApi } from "@/lib/api/settings";
 import Script from "next/script";
 import { Ornament } from "@/components/site/Ornament";
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
@@ -25,8 +26,6 @@ type CountryCode = keyof typeof COUNTRY_CONFIG;
 
 type Step = 1 | 2 | 3;
 type PaymentMode = "full" | "partial";
-const DEPOSIT_OPTIONS = [30, 40, 50] as const;
-type DepositPct = (typeof DEPOSIT_OPTIONS)[number];
 
 function daysBetween(dateStr: string): number {
   const target = new Date(dateStr);
@@ -57,12 +56,19 @@ export default function BookRoomPage() {
   const [step, setStep] = useState<Step>(1);
 
   const searchParams = useSearchParams();
+  const isMultiRoom = roomId === "checkout";
+  const requestedRooms = searchParams.getAll("rooms").map(Number);
 
   /* ─── step 1: guest info ─────────────────────── */
   const [checkIn, setCheckIn] = useState(searchParams.get("checkIn") || "");
   const [checkOut, setCheckOut] = useState(searchParams.get("checkOut") || "");
   const [adults, setAdults] = useState<number | string>(searchParams.get("adults") || 1);
-  const [children, setChildren] = useState<number | string>(0);
+  const [roomsCount, setRoomsCount] = useState<number>(1);
+  const [children, setChildren] = useState<number | string>(searchParams.get("children") || 0);
+  const [childrenAges, setChildrenAges] = useState<number[]>(
+    searchParams.get("children_ages") ? searchParams.get("children_ages")!.split(',').map(Number) : []
+  );
+  
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -76,7 +82,9 @@ export default function BookRoomPage() {
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("full");
-  const [depositPct, setDepositPct] = useState<DepositPct>(30);
+  const [freeCancellation, setFreeCancellation] = useState(false);
+  
+  const [settings, setSettings] = useState<any>(null);
 
   /* ─── booking + payment state ────────────────── */
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,11 +96,11 @@ export default function BookRoomPage() {
   /* ─── derived ────────────────────────────────── */
   const nights = nightsBetween(checkIn, checkOut);
   const daysUntilCheckIn = checkIn ? daysBetween(checkIn) : 0;
-  const isPartialEligible = daysUntilCheckIn >= 15;
+  const isPartialEligible = settings?.partial_payment_enabled ? (daysUntilCheckIn >= 15) : false;
 
-  const baseTotal = room ? room.price * nights : 0;
-  const serviceCharge = Math.round(baseTotal * 0.05); // 5% service
-  const taxes = Math.round(baseTotal * 0.12); // 12% GST (display)
+  const baseTotal = room ? room.price * nights * (isMultiRoom ? 1 : roomsCount) : 0;
+  const serviceCharge = settings?.service_charge || 500;
+  const taxes = Math.round(baseTotal * 0.12);
 
   const couponDiscount = useMemo(() => {
     if (!appliedCoupon || baseTotal < appliedCoupon.min_amount) return 0;
@@ -104,6 +112,7 @@ export default function BookRoomPage() {
   }, [appliedCoupon, baseTotal]);
 
   const grandTotal = Math.max(0, baseTotal + serviceCharge + taxes - couponDiscount);
+  const depositPct = settings?.deposit_percent || 30;
   const depositAmount = Math.round(grandTotal * (depositPct / 100));
   const amountToCharge = paymentMode === "partial" && isPartialEligible ? depositAmount : grandTotal;
 
@@ -112,27 +121,81 @@ export default function BookRoomPage() {
     const token = getAccessToken();
     if (!token) { 
       const currentUrl = window.location.pathname + window.location.search;
+      sessionStorage.setItem('auth_return_url', currentUrl);
+      const ctx = {
+        checkIn, checkOut, adults, children, childrenAges, firstName, lastName, email, phone, countryCode,
+        rooms: requestedRooms, roomsCount
+      };
+      sessionStorage.setItem('auth_booking_context', JSON.stringify(ctx));
       router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
       return; 
     }
 
     async function fetchData() {
       try {
-        const [roomRes, profileRes, couponsRes] = await Promise.all([
-          roomsApi.getRoomById(Number(roomId)),
+        let aggregatedRoom: Room | null = null;
+        let roomDataPromise;
+        if (isMultiRoom && requestedRooms.length > 0) {
+          roomDataPromise = Promise.all(requestedRooms.map(id => roomsApi.getRoomById(id))).then(results => {
+            const fetchedRooms = results.filter(r => r.success).map(r => r.room);
+            if (fetchedRooms.length > 0) {
+              aggregatedRoom = {
+                ...fetchedRooms[0],
+                id: -1,
+                name: fetchedRooms.map(r => r.name).join(' + '),
+                capacity: fetchedRooms.reduce((sum, r) => sum + r.capacity, 0),
+                price: fetchedRooms.reduce((sum, r) => sum + r.price, 0),
+              };
+            }
+            return { success: true, room: aggregatedRoom };
+          });
+        } else {
+          roomDataPromise = roomsApi.getRoomById(Number(roomId)).then(r => {
+             if (r.success) aggregatedRoom = r.room;
+             return r;
+          });
+        }
+
+        const [roomRes, profileRes, couponsRes, settingsRes] = await Promise.all([
+          roomDataPromise,
           authApi.getProfile().catch(() => ({ success: false, user: null })),
-          couponsApi.getCoupons().catch(() => ({ success: false, coupons: [] }))
+          couponsApi.getCoupons().catch(() => ({ success: false, coupons: [] })),
+          settingsApi.getPaymentSettings().catch(() => ({ success: false, settings: { partial_payment_enabled: true, deposit_percent: 30, service_charge: 500, cancellation_window_days: 3 } }))
         ]);
 
-        if (roomRes.success) setRoom(roomRes.room);
+        if (aggregatedRoom) setRoom(aggregatedRoom as Room);
         else setError("Room not found.");
+
+        if (settingsRes.success && settingsRes.settings) {
+          setSettings(settingsRes.settings);
+        }
 
         if (profileRes.success && profileRes.user) {
           const u = profileRes.user;
-          if (u.first_name) setFirstName(u.first_name);
-          if (u.last_name) setLastName(u.last_name);
-          if (u.email) setEmail(u.email);
-          if (u.phone) {
+          // Restore from context if available, otherwise profile
+          const storedCtxStr = sessionStorage.getItem('auth_booking_context');
+          let parsedCtx: any = null;
+          try {
+            if (storedCtxStr) {
+               parsedCtx = JSON.parse(storedCtxStr);
+               if (parsedCtx.roomsCount) setRoomsCount(parsedCtx.roomsCount);
+               sessionStorage.removeItem('auth_booking_context');
+            }
+          } catch(e) {}
+          
+          if (parsedCtx?.firstName) setFirstName(parsedCtx.firstName);
+          else if (u.first_name) setFirstName(u.first_name);
+          
+          if (parsedCtx?.lastName) setLastName(parsedCtx.lastName);
+          else if (u.last_name) setLastName(u.last_name);
+          
+          if (parsedCtx?.email) setEmail(parsedCtx.email);
+          else if (u.email) setEmail(u.email);
+          
+          if (parsedCtx?.phone) {
+             setPhone(parsedCtx.phone);
+             if (parsedCtx.countryCode) setCountryCode(parsedCtx.countryCode);
+          } else if (u.phone) {
             const phoneVal = u.phone.replace(/^\+\d+\s/, '');
             setPhone(phoneVal);
           }
@@ -231,11 +294,13 @@ export default function BookRoomPage() {
     setSubmitError("");
 
     const payload: CreateBookingPayload = {
-      room_id: Number(roomId),
+      room_id: isMultiRoom ? requestedRooms[0] : Number(roomId),
+      ...(isMultiRoom ? { rooms: requestedRooms } : (roomsCount > 1 ? { rooms: Array(roomsCount).fill(Number(roomId)) } : {})),
       check_in_date: checkIn,
       check_out_date: checkOut,
       number_of_adults: Number(adults) || 1,
       number_of_children: Number(children) || 0,
+      ...(childrenAges.length > 0 ? { children_ages: childrenAges } : {}),
       guests: [
         {
           first_name: firstName,
@@ -246,6 +311,7 @@ export default function BookRoomPage() {
         },
       ],
       ...(appliedCoupon ? { coupon_code: appliedCoupon.code } : {}),
+      free_cancellation: freeCancellation,
     };
 
     try {
@@ -493,11 +559,21 @@ export default function BookRoomPage() {
 
                   {/* Guests count */}
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-[var(--gold)] mb-4">Guest Count</p>
-                    <div className="grid grid-cols-2 gap-4">
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-[var(--gold)] mb-4">{isMultiRoom ? "Guest Count" : "Room & Guest Count"}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {!isMultiRoom && (
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">Rooms</label>
+                          <select required value={roomsCount} onChange={(e) => setRoomsCount(parseInt(e.target.value))} className="w-full bg-transparent border-b border-[var(--gold)]/40 py-2.5 focus:outline-none focus:border-[var(--maroon)] text-foreground appearance-none">
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                              <option key={n} value={n} className="bg-[var(--background)] text-foreground">{n}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">Adults</label>
-                        <input required type="number" min="1" max={room.capacity} value={adults} onChange={(e) => setAdults(e.target.value)} className="w-full bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground" />
+                        <input required type="number" min="1" max={room.capacity * (isMultiRoom ? 1 : roomsCount)} value={adults} onChange={(e) => setAdults(e.target.value)} className="w-full bg-transparent border-b border-[var(--gold)]/40 py-2 focus:outline-none focus:border-[var(--maroon)] text-foreground" />
                       </div>
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">Children</label>
@@ -715,6 +791,33 @@ export default function BookRoomPage() {
                   )}
                 </div>
 
+                {/* Free Cancellation Section */}
+                {settings?.cancellation_window_days > 0 && (
+                  <div className="bg-card border border-[var(--gold)]/30 p-6 shadow-[var(--shadow-soft)]">
+                    <label className="flex items-start gap-4 cursor-pointer group">
+                      <div className="relative mt-1 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={freeCancellation}
+                          onChange={(e) => setFreeCancellation(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${freeCancellation ? 'bg-[var(--maroon)] border-[var(--maroon)]' : 'border-[var(--gold)]/40 group-hover:border-[var(--gold)]/80'}`}>
+                          {freeCancellation && (
+                            <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-display text-xl text-[var(--maroon)]">Free Cancellation</h3>
+                        <p className="text-xs text-muted-foreground mt-1 font-serif">
+                          Opt-in for free cancellation. You can cancel your booking up to {settings.cancellation_window_days} days before check-in for a full refund.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
                 {/* Payment Mode Section */}
                 <div className="bg-card border border-[var(--gold)]/30 p-6 shadow-[var(--shadow-soft)]">
                   <div className="flex items-center gap-3 mb-2">
@@ -803,26 +906,10 @@ export default function BookRoomPage() {
                             : "Available only for bookings 15+ days before check-in."}
                         </p>
 
-                        {/* Deposit % selector */}
+                        {/* Deposit % summary */}
                         {paymentMode === "partial" && isPartialEligible && (
                           <div className="mt-4 space-y-3">
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--maroon)]">Choose deposit amount</p>
-                            <div className="flex gap-2">
-                              {DEPOSIT_OPTIONS.map((pct) => (
-                                <button
-                                  key={pct}
-                                  type="button"
-                                  onClick={() => setDepositPct(pct)}
-                                  className={`flex-1 py-2.5 text-xs uppercase tracking-widest border transition-all duration-200 ${
-                                    depositPct === pct
-                                      ? "bg-[var(--gold)] border-[var(--gold)] text-[var(--maroon-deep)] font-medium"
-                                      : "border-[var(--gold)]/40 text-foreground hover:border-[var(--gold)]"
-                                  }`}
-                                >
-                                  {pct}%
-                                </button>
-                              ))}
-                            </div>
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--maroon)]">Deposit Breakdown ({depositPct}%)</p>
                             <div className="grid grid-cols-2 gap-2 text-xs font-serif">
                               <div className="p-2.5 bg-[var(--gold)]/10 border border-[var(--gold)]/20 text-center">
                                 <p className="text-muted-foreground mb-0.5">Pay now</p>

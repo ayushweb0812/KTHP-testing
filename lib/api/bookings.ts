@@ -10,25 +10,30 @@ export interface Guest {
 }
 
 export interface CreateBookingPayload {
-  room_id: number;
+  room_id?: number;
+  rooms?: number[];
   check_in_date: string; // YYYY-MM-DD
   check_out_date: string; // YYYY-MM-DD
   number_of_adults: number;
-  number_of_children: number;
+  number_of_children?: number;
+  children_ages?: number[];
   guests: Guest[];
   coupon_code?: string;
+  free_cancellation?: boolean;
 }
 
 export interface Booking {
   id: number;
   user_id: number;
-  room_id: number;
+  room_id?: number;
+  rooms?: any[];
   check_in_date: string;
   check_in_time: string;
   check_out_date: string;
   check_out_time: string;
   number_of_adults: number;
   number_of_children: number;
+  children?: any[];
   number_of_nights: number;
   guests: Guest[];
   coupon_code: string | null;
@@ -42,13 +47,14 @@ export interface Booking {
   payment_status: string;
   status: string;
   cancellation_policy: string | null;
+  free_cancellation?: boolean;
   created_at: string;
   updated_at: string;
 }
 
 export const bookingsApi = {
   async createBooking(payload: CreateBookingPayload): Promise<{ success: boolean; message: string; booking: Booking }> {
-    return fetchClient<{ success: boolean; message: string; booking: Booking }>('/api/bookings', {
+    return fetchClient<{ success: boolean; message: string; booking: Booking }>('/api/bookings/', {
       method: 'POST',
       requireAuth: true,
       body: JSON.stringify(payload),
@@ -56,23 +62,31 @@ export const bookingsApi = {
   },
 
   async getMyBookings(): Promise<{ success: boolean; bookings: Booking[] }> {
-    return fetchClient<{ success: boolean; bookings: Booking[] }>('/api/bookings', {
+    return fetchClient<{ success: boolean; bookings: Booking[] }>('/api/bookings/', {
       method: 'GET',
       requireAuth: true,
     });
   },
 
   async getBookingById(id: number | string): Promise<{ success: boolean; booking: Booking }> {
-    return fetchClient<{ success: boolean; booking: Booking }>(`/api/bookings/${id}`, {
+    return fetchClient<{ success: boolean; booking: Booking }>(`/api/bookings/${id}/`, {
       method: 'GET',
       requireAuth: true,
     });
   },
 
   async cancelBooking(id: number | string): Promise<{ success: boolean; message: string; booking: Booking }> {
-    return fetchClient<{ success: boolean; message: string; booking: Booking }>(`/api/bookings/${id}/cancel`, {
+    return fetchClient<{ success: boolean; message: string; booking: Booking }>(`/api/bookings/${id}/cancel/`, {
       method: 'PUT',
       requireAuth: true,
+    });
+  },
+
+  async cancelBookingRequest(id: number | string, reason: string): Promise<{ success: boolean; message: string }> {
+    return fetchClient<{ success: boolean; message: string }>(`/api/bookings/${id}/cancel-request/`, {
+      method: 'POST',
+      requireAuth: true,
+      body: JSON.stringify({ reason }),
     });
   }
 };

@@ -77,7 +77,18 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         if (res.success) {
           window.dispatchEvent(new Event('auth-change'));
           onClose();
-          router.push('/profile/personal-details');
+          
+          let returnUrl = null;
+          if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            returnUrl = params.get('redirect') || sessionStorage.getItem('auth_return_url');
+          }
+          if (returnUrl && returnUrl.startsWith('/')) {
+            sessionStorage.removeItem('auth_return_url');
+            router.push(returnUrl);
+          } else {
+            router.push('/profile/personal-details');
+          }
         } else {
           throw new Error('Backend authentication failed');
         }
