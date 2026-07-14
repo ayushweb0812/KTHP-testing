@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Ornament } from './Ornament';
-import { enquiryApi, EnquiryPayload } from '@/lib/api/enquiry';
 import { pushGtmEvent } from '@/lib/analytics/gtm';
 
 const COUNTRY_CONFIG = {
@@ -76,17 +75,34 @@ export function EnquiryModal({ isOpen, onClose, enquiryType }: EnquiryModalProps
     setError('');
     
     try {
-      const payload: EnquiryPayload = {
-        ...formData,
-        phone: `${countryCode}${formData.phone}`,
-        enquiry_type: enquiryType,
+      const payload = {
+        service_id: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+        template_id: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
+        user_id: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY,
+        template_params: {
+          name: formData.name,
+          email: formData.email,
+          phone: `${countryCode}${formData.phone}`,
+          date: formData.date || 'Not specified',
+          message: formData.message,
+          enquiry_type: enquiryType,
+        }
       };
-      const res = await enquiryApi.submitEnquiry(payload);
-      if (res.success) {
+
+      const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
         setSuccess(true);
         pushGtmEvent('enquiry_form_submit', { enquiry_type: enquiryType });
       } else {
-        setError(res.message || 'Failed to submit enquiry.');
+        const errorText = await res.text();
+        setError(`Failed to send email. Please try again. ${errorText ? `(${errorText})` : ''}`);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred while submitting.');

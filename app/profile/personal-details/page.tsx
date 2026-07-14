@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { authApi, User } from '@/lib/api/auth';
 
 export default function PersonalDetailsPage() {
@@ -44,7 +45,7 @@ export default function PersonalDetailsPage() {
       phone,
       gender: formData.get('gender') as string,
       birthday: formData.get('birthday') as string,
-      address: formData.get('address') as string,
+      email: formData.get('email') as string,
       country: formData.get('country') as string,
       zipcode: formData.get('zipcode') as string,
     };
@@ -55,9 +56,9 @@ export default function PersonalDetailsPage() {
 
     try {
       const res = await authApi.updateProfile(payload);
-      if (res.success && res.user) {
-        setUser(res.user);
+      if (res.success) {
         setIsEditingPersonal(false);
+        window.location.reload();
       } else {
         alert(res.message || 'Failed to save profile.');
       }
@@ -122,61 +123,16 @@ export default function PersonalDetailsPage() {
           </div>
           <div>
             <p className="text-[10px] text-[var(--muted-foreground)] mb-1">Preferred Language</p>
-            <p className="text-sm text-[var(--foreground)]">English</p>
+            <p className="text-sm text-[var(--foreground)] capitalize">{user?.preferred_language || 'English'}</p>
           </div>
         </div>
       </div>
 
-      {/* Billing Address */}
-      <div className="bg-[var(--card)] border border-[var(--gold)]/20 p-8 shadow-sm relative">
-        <div className="flex justify-between items-start mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#f4ebd0] flex items-center justify-center text-[var(--gold)] shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-            </div>
-            <h2 className="text-xl font-serif text-[var(--foreground)]">Billing Address</h2>
-          </div>
-          <button 
-            onClick={() => setIsEditingPersonal(true)}
-            className="px-4 py-2 border border-[var(--gold)]/30 text-[10px] text-[var(--gold)] uppercase tracking-widest hover:bg-[var(--gold)]/5 transition-colors flex items-center gap-2"
-          >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-            Edit
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
-          <div>
-            <p className="text-[10px] text-[var(--muted-foreground)] mb-1">Address Line 1</p>
-            <p className="text-sm text-[var(--foreground)]">{user?.address || '221B, Ballygunge Circular Road'}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-[var(--muted-foreground)] mb-1">Address Line 2</p>
-            <p className="text-sm text-[var(--foreground)]">Kolkata - 700019</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-[var(--muted-foreground)] mb-1">City</p>
-            <p className="text-sm text-[var(--foreground)]">Kolkata</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-[var(--muted-foreground)] mb-1">State</p>
-            <p className="text-sm text-[var(--foreground)]">West Bengal</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-[var(--muted-foreground)] mb-1">Country</p>
-            <p className="text-sm text-[var(--foreground)]">{user?.country || 'India'}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-[var(--muted-foreground)] mb-1">Pincode</p>
-            <p className="text-sm text-[var(--foreground)]">{user?.zipcode || '700019'}</p>
-          </div>
-        </div>
-      </div>
 
       {/* Edit Modal (Simple fallback for editing) */}
-      {isEditingPersonal && (
+      {isEditingPersonal && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[var(--card)] p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[var(--gold)]/20 shadow-xl">
+          <div className="bg-[var(--card)] p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[var(--gold)]/20 shadow-xl rounded-sm">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-serif text-[var(--foreground)]">Edit Personal Details</h3>
               <button onClick={() => setIsEditingPersonal(false)} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
@@ -200,7 +156,7 @@ export default function PersonalDetailsPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[var(--foreground)]">Phone Number</label>
                   <div className="flex gap-2">
-                    <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="input-royal w-24 bg-transparent rounded-md px-2">
+                    <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="input-royal w-[80px] bg-transparent rounded-md px-2 pl-3">
                       <option value="+91">+91</option>
                       <option value="+1">+1</option>
                       <option value="+44">+44</option>
@@ -219,9 +175,20 @@ export default function PersonalDetailsPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--foreground)]">Address</label>
-                <input type="text" name="address" defaultValue={user?.address || ''} className="input-royal bg-transparent rounded-md" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--foreground)]">Email Address</label>
+                  <input type="email" name="email" defaultValue={user?.email || ''} className="input-royal bg-transparent rounded-md" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--foreground)]">Preferred Language</label>
+                  <select name="preferred_language" defaultValue={user?.preferred_language || 'English'} className="input-royal bg-transparent rounded-md">
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="French">French</option>
+                    <option value="Spanish">Spanish</option>
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -230,8 +197,8 @@ export default function PersonalDetailsPage() {
                   <input type="text" name="country" defaultValue={user?.country || ''} className="input-royal bg-transparent rounded-md" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[var(--foreground)]">Zipcode</label>
-                  <input type="text" name="zipcode" defaultValue={user?.zipcode || ''} className="input-royal bg-transparent rounded-md" />
+                  <label className="text-sm font-medium text-[var(--foreground)]">State</label>
+                  <input type="text" name="state" defaultValue={user?.state || ''} className="input-royal bg-transparent rounded-md" />
                 </div>
               </div>
 
@@ -245,7 +212,8 @@ export default function PersonalDetailsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

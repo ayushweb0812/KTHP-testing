@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { Room, roomsApi } from '@/lib/api/rooms';
 import { Ornament } from './Ornament';
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
+import { getRoomPrice, formatPrice } from "@/lib/utils/pricing";
 
 interface RoomDetailsModalProps {
   isOpen: boolean;
@@ -154,7 +155,7 @@ export function RoomDetailsModal({ isOpen, onClose, roomId }: RoomDetailsModalPr
                       )}
 
                       <div className="mt-8 pt-6 border-t border-[var(--gold)]/20">
-                        <div className="text-display text-3xl gold-text mb-1">₹{room.price.toLocaleString()}</div>
+                        <div className="text-display text-3xl gold-text mb-1">{formatPrice(getRoomPrice(room))}</div>
                         <p className="text-[11px] text-muted-foreground mb-6">per night · taxes extra</p>
                         <Link href={`/book/${room.id}`} className="block w-full text-center px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors shadow-[var(--shadow-gold)]">
                           Reserve →

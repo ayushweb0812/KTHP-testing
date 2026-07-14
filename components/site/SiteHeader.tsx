@@ -4,6 +4,7 @@ import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { getAccessToken } from "@/lib/api";
+import { useTransition } from "@/components/transitions/TransitionContext";
 import { authApi, User } from "@/lib/api/auth";
 import { bookingsApi } from "@/lib/api/bookings";
 import { EnquiryModal } from "./EnquiryModal";
@@ -27,6 +28,7 @@ export function SiteHeader() {
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { startTransition } = useTransition();
 
   const pathname = usePathname();
 
@@ -78,10 +80,8 @@ export function SiteHeader() {
         <div className="mx-auto max-w-[1400px] px-6 lg:px-12 h-20 flex items-center justify-between">
           
           {/* Logo Section */}
-          <Link href="/" className="flex items-center gap-4 group">
-            <div className="w-11 h-11 rounded-full border border-[var(--gold)] flex items-center justify-center group-hover:rotate-12 transition-transform duration-700 shrink-0">
-              <span className="text-[var(--gold)] text-display text-xl">क</span>
-            </div>
+          <Link href="/" onClick={startTransition} className="flex items-center gap-4 group">
+            <img src="/logo (1).svg" alt="Kila The Heritage Palace" className="h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-700" />
             <div className="flex flex-col justify-center mt-1">
               <div className="text-[var(--foreground)] text-display text-2xl tracking-[0.2em] leading-none mb-1">KILA</div>
               <div className="text-[8px] uppercase tracking-[0.3em] text-[var(--muted-foreground)] leading-none">
@@ -96,6 +96,7 @@ export function SiteHeader() {
               <Link
                 key={n.href}
                 href={n.href}
+                onClick={startTransition}
                 className={`text-[10px] tracking-[0.2em] transition-colors duration-500 uppercase ${
                   pathname === n.href || (pathname?.startsWith('/reserve') && n.href === '/reserve')
                     ? "text-[var(--foreground)] font-medium"
@@ -127,15 +128,15 @@ export function SiteHeader() {
                 </button>
 
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 top-[calc(100%+12px)] w-56 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 py-2 animate-fade-up z-50">
-                    <Link href="/profile" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-[13px] text-gray-700 transition-colors mx-2 rounded-lg">
-                      <svg className="w-[18px] h-[18px] text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  <div className="absolute right-0 top-[calc(100%+12px)] w-56 bg-white/80 backdrop-blur-md rounded-2xl shadow-[0_8px_32px_rgba(31,38,135,0.07)] border border-[var(--gold)]/20 py-2 animate-fade-up z-50">
+                    <Link href="/profile" onClick={() => { setProfileDropdownOpen(false); startTransition(); }} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--gold)]/10 text-[13px] text-[var(--foreground)] transition-colors mx-2 rounded-lg font-medium group">
+                      <svg className="w-[18px] h-[18px] text-[var(--muted-foreground)] group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                       My Profile
                     </Link>
                     
-                    <Link href="/profile/trips" onClick={() => setProfileDropdownOpen(false)} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-[13px] text-gray-700 transition-colors mx-2 rounded-lg">
+                    <Link href="/profile/trips" onClick={() => { setProfileDropdownOpen(false); startTransition(); }} className="flex items-center justify-between px-4 py-2.5 hover:bg-[var(--gold)]/10 text-[13px] text-[var(--foreground)] transition-colors mx-2 rounded-lg font-medium group">
                       <div className="flex items-center gap-3">
-                        <svg className="w-[18px] h-[18px] text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                        <svg className="w-[18px] h-[18px] text-[var(--muted-foreground)] group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                         My Booking
                       </div>
                       {upcomingCount > 0 && (
@@ -145,24 +146,26 @@ export function SiteHeader() {
                       )}
                     </Link>
 
-                    <Link href="/profile/settings" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-[13px] text-gray-700 transition-colors mx-2 rounded-lg">
-                      <svg className="w-[18px] h-[18px] text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {/* Settings Page - Commented Out 
+                    <Link href="/profile/settings" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--gold)]/10 text-[13px] text-[var(--foreground)] transition-colors mx-2 rounded-lg font-medium group">
+                      <svg className="w-[18px] h-[18px] text-[var(--muted-foreground)] group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       Settings
                     </Link>
+                    */}
 
-                    <div className="h-[1px] w-full bg-gray-100 my-2" />
+                    <div className="h-[1px] w-full bg-[var(--gold)]/10 my-2" />
 
                     <button 
                       onClick={() => {
                         setProfileDropdownOpen(false);
                         setShowLogoutConfirm(true);
                       }} 
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-[13px] text-gray-700 transition-colors mx-2 rounded-lg"
+                      className="w-[calc(100%-16px)] flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--gold)]/10 text-[13px] text-[var(--foreground)] transition-colors mx-2 rounded-lg font-medium group"
                     >
-                      <svg className="w-[18px] h-[18px] text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                      <svg className="w-[18px] h-[18px] text-[var(--muted-foreground)] group-hover:text-[#4B0000] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                       Sign out
                     </button>
                   </div>
@@ -205,7 +208,7 @@ export function SiteHeader() {
                 <Link
                   key={n.href}
                   href={n.href}
-                  onClick={() => setOpen(false)}
+                  onClick={() => { setOpen(false); startTransition(); }}
                   className="text-[var(--foreground)] text-xs uppercase tracking-widest"
                 >
                   {n.label}
@@ -215,7 +218,7 @@ export function SiteHeader() {
               {isAuthenticated ? (
                 <Link
                   href="/profile"
-                  onClick={() => setOpen(false)}
+                  onClick={() => { setOpen(false); startTransition(); }}
                   className="px-6 py-3 bg-[var(--gold)] text-[var(--background)] text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

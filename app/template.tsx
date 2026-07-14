@@ -63,9 +63,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
         className="fixed inset-0 z-[100] bg-maroon-deep flex items-center justify-center pointer-events-none"
         style={{ transform: "translateY(-100%)" }}
       >
-        <div className="w-16 h-16 rounded-full border border-gold/60 flex items-center justify-center">
-          <span className="text-gold text-display text-3xl animate-pulse">क</span>
-        </div>
+        <img src="/logo (1).svg" alt="Kila" className="h-16 w-auto object-contain animate-pulse" />
       </div>
 
       {/* Page Content */}

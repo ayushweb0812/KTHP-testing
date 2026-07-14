@@ -3,7 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { authApi, User } from '@/lib/api/auth';
-import Link from 'next/link';
+import { bookingsApi, Booking, BookingRoom } from '@/lib/api/bookings';
+import { roomsApi, Room } from '@/lib/api/rooms';
+import { TransitionLink as Link } from "@/components/site/TransitionLink";
+import { useTransition } from "@/components/transitions/TransitionContext";
 
 export default function ProfileShell({
   children,
@@ -12,24 +15,51 @@ export default function ProfileShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { startTransition } = useTransition();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [recentStays, setRecentStays] = useState<Booking[]>([]);
+  const [completedStaysCount, setCompletedStaysCount] = useState(0);
+  const [roomsMap, setRoomsMap] = useState<Record<number, Room>>({});
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    
-    const fetchProfile = async () => {
+
+    const fetchProfileData = async () => {
       try {
-        const res = await authApi.getProfile();
+        const [profileRes, bookingsRes, roomsRes] = await Promise.all([
+          authApi.getProfile(),
+          bookingsApi.getMyBookings().catch(() => ({ success: false, bookings: [] })),
+          roomsApi.getRooms().catch(() => ({ success: false, rooms: [] }))
+        ]);
+
         if (mounted) {
-          if (res.success && res.user) {
-            setUser(res.user);
+          if (profileRes.success && profileRes.user) {
+            setUser(profileRes.user);
           } else {
             const currentUrl = window.location.pathname + window.location.search;
             sessionStorage.setItem('auth_return_url', currentUrl);
             router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
+            return;
+          }
+
+          if (bookingsRes.success && bookingsRes.bookings) {
+            const now = new Date().getTime();
+            const past = bookingsRes.bookings.filter((b: Booking) => 
+              new Date(b.check_out_date).getTime() < now && b.status !== 'cancelled'
+            );
+            past.sort((a: Booking, b: Booking) => new Date(b.check_out_date).getTime() - new Date(a.check_out_date).getTime());
+            setCompletedStaysCount(past.length);
+            setRecentStays(past.slice(0, 2));
+          }
+
+          if (roomsRes.success && roomsRes.rooms) {
+            const rMap: Record<number, Room> = {};
+            roomsRes.rooms.forEach((r: Room) => rMap[r.id] = r);
+            setRoomsMap(rMap);
           }
         }
       } catch (err: any) {
@@ -45,7 +75,7 @@ export default function ProfileShell({
       }
     };
 
-    fetchProfile();
+    fetchProfileData();
     return () => { mounted = false; };
   }, [router]);
 
@@ -76,23 +106,23 @@ export default function ProfileShell({
 
   return (
     <>
-      <div className="min-h-screen paper-grain bg-[var(--background)]">
+      <div className="min-h-screen paper-grain bg-[var(--background)] pt-20">
         {/* Hero Banner */}
-        <div className="relative h-[300px] md:h-[400px] w-full flex flex-col items-center justify-center text-center px-4 overflow-hidden mt-20">
+        <div className="relative h-[300px] md:h-[400px] w-full flex flex-col items-center justify-center text-center px-4 overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <img src="/Hero screen/image1.png" alt="Palace Exterior" className="w-full h-full object-cover object-center" />
+            <img src="/Hero screen/image2.png" alt="Palace Exterior" className="w-full h-full object-cover object-center" />
             <div className="absolute inset-0 bg-black/50" />
           </div>
-          
+
           <div className="relative z-10 animate-fade-up">
             <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--gold)] mb-3 flex items-center justify-center gap-4 before:h-[1px] before:w-8 before:bg-[var(--gold)] after:h-[1px] after:w-8 after:bg-[var(--gold)]">
               Your Account
             </p>
             <h1 className="text-display text-4xl md:text-5xl lg:text-6xl text-parchment capitalize mb-3">
-              {pathname === '/profile/trips' ? 'My Bookings' : 
-               pathname === '/profile/settings' ? 'Settings' : 
-               pathname === '/profile/payment-account' ? 'Payment Account' : 
-               'Personal Details'}
+              {pathname === '/profile/trips' ? 'My Bookings' :
+                pathname === '/profile/settings' ? 'Settings' :
+                  pathname === '/profile/payment-account' ? 'Payment Account' :
+                    'Personal Details'}
             </h1>
             {pathname === '/profile/trips' ? (
               <p className="text-sm md:text-base text-parchment/90 font-medium tracking-wide mt-2">
@@ -112,13 +142,13 @@ export default function ProfileShell({
 
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
           <div className="flex flex-col md:flex-row gap-8 items-start">
-            
+
             {/* Left Sidebar (Profile Summary) */}
             {pathname !== '/profile/trips' && pathname !== '/profile/settings' && (
               <div className="w-full md:w-80 flex-shrink-0">
                 <div className="bg-[var(--card)] border border-[var(--gold)]/20 p-8 shadow-sm flex flex-col items-center relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--gold)]/50" />
-                  
+
                   {/* Avatar */}
                   <div className="relative mb-4 mt-2">
                     <div className="w-24 h-24 rounded-full bg-[#f4ebd0] border border-[var(--gold)]/30 text-[var(--maroon)] flex items-center justify-center text-3xl font-serif shadow-sm">
@@ -133,36 +163,43 @@ export default function ProfileShell({
                     {user ? ([user.first_name, user.last_name].filter(n => n && n !== 'null').join(' ') || 'Guest User') : 'Guest User'}
                   </h2>
                   <p className="text-[11px] text-[var(--muted-foreground)] mb-6">
-                    Member Since May 2025
+                    Member Since {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : 'May 2025'}
                   </p>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-[var(--foreground)] mb-8">
                     <span className="w-2 h-2 rounded-full bg-[var(--gold)]"></span>
-                    2 Stays Completed
+                    {completedStaysCount} Stay{completedStaysCount !== 1 ? 's' : ''} Completed
                   </div>
 
                   {/* Recent Stay */}
-                  <div className="w-full border border-[var(--gold)]/15 p-5 relative mt-4">
-                     <p className="text-[10px] text-[var(--muted-foreground)] tracking-widest absolute -top-[9px] left-4 bg-[var(--card)] px-2">Recent Stay</p>
-                     
-                     <div className="flex gap-4 items-center mb-6 pt-2">
-                       <div className="w-14 h-14 bg-[#f4ebd0] shrink-0" />
-                       <div>
-                         <h4 className="font-serif text-sm text-[var(--foreground)]">Royal Heritage Suite</h4>
-                         <p className="text-[10px] text-[var(--muted-foreground)] mt-1">14 - 17 June 2026</p>
-                         <Link href="/profile/trips" className="text-[10px] text-[var(--gold)] mt-2 inline-block">View Stay &rarr;</Link>
-                       </div>
-                     </div>
+                  {recentStays.length > 0 && (
+                    <div className="w-full border border-[var(--gold)]/15 p-5 relative mt-4">
+                      <p className="text-[10px] text-[var(--muted-foreground)] tracking-widest absolute -top-[9px] left-4 bg-[var(--card)] px-2">Recent Stay{recentStays.length > 1 ? 's' : ''}</p>
 
-                     <div className="flex gap-4 items-center">
-                       <div className="w-14 h-14 bg-[#f4ebd0] shrink-0" />
-                       <div>
-                         <h4 className="font-serif text-sm text-[var(--foreground)]">Royal Heritage Suite</h4>
-                         <p className="text-[10px] text-[var(--muted-foreground)] mt-1">14 - 17 June 2026</p>
-                         <Link href="/profile/trips" className="text-[10px] text-[var(--gold)] mt-2 inline-block">View Stay &rarr;</Link>
-                       </div>
-                     </div>
-                  </div>
+                      {recentStays.map((booking, idx) => {
+                        const bookingRooms: BookingRoom[] = booking.rooms?.length ? booking.rooms : (booking.room_id !== undefined ? [{ room_id: booking.room_id }] : []);
+                        const mainRoom = bookingRooms.length > 0 ? roomsMap[bookingRooms[0].room_id ?? bookingRooms[0].id ?? 0] : undefined;
+                        const roomName = bookingRooms.length > 1 ? `Multiple Rooms (${bookingRooms.length})` : mainRoom?.name || "Heritage Chamber";
+                        const roomImage = mainRoom?.images?.[0];
+                        
+                        const formatShortDate = (dateStr: string) => {
+                          if (!dateStr) return '-';
+                          const d = new Date(dateStr);
+                          return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                        };
+                        
+                        return (
+                          <div key={booking.id} className={`flex gap-4 items-center ${idx === 0 && recentStays.length > 1 ? 'mb-6 pt-2' : ''}`}>
+                            <div>
+                              <h4 className="font-serif text-sm text-[var(--foreground)]">{roomName}</h4>
+                              <p className="text-[10px] text-[var(--muted-foreground)] mt-1">{formatShortDate(booking.check_in_date)} - {formatShortDate(booking.check_out_date)}</p>
+                              <Link href="/profile/trips" onClick={startTransition} className="text-[10px] text-[var(--gold)] mt-2 inline-block">View Stay &rarr;</Link>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -183,13 +220,13 @@ export default function ProfileShell({
             <h3 className="text-2xl font-serif text-[var(--gold)] mb-4">Logout</h3>
             <p className="text-[var(--muted-foreground)] mb-8">Are you sure you want to log out of your royal account?</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button 
+              <button
                 onClick={() => setShowLogoutConfirm(false)}
                 className="px-6 py-2 border border-[var(--gold)] text-[var(--gold)] rounded hover:bg-[var(--gold)]/10 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => {
                   authApi.logout();
                   window.dispatchEvent(new Event('auth-change'));

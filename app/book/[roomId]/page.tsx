@@ -12,8 +12,10 @@ import { settingsApi } from "@/lib/api/settings";
 import Script from "next/script";
 import { Ornament } from "@/components/site/Ornament";
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
+import { useTransition } from "@/components/transitions/TransitionContext";
 import { RoomDetailsModal } from "@/components/site/RoomDetailsModal";
 import { pushGtmEvent } from "@/lib/analytics/gtm";
+import { getRoomPrice, formatPrice } from "@/lib/utils/pricing";
 
 const COUNTRY_CONFIG = {
   "+91": { name: "IN (+91)", length: 10, placeholder: "10-digit number" },
@@ -44,6 +46,7 @@ function nightsBetween(checkIn: string, checkOut: string): number {
 export default function BookRoomPage() {
   const { roomId } = useParams();
   const router = useRouter();
+  const { startTransition } = useTransition();
 
   /* ─── room data ─────────────────────────────── */
   const [room, setRoom] = useState<Room | null>(null);
@@ -84,7 +87,13 @@ export default function BookRoomPage() {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("full");
   const [freeCancellation, setFreeCancellation] = useState(false);
   
-  const [settings, setSettings] = useState<any>(null);
+  const [settingsError, setSettingsError] = useState(false);
+  const [settings, setSettings] = useState<{
+    partial_payment_enabled: boolean;
+    deposit_percent: number;
+    service_charge: number;
+    cancellation_window_days: number;
+  } | null>(null);
 
   /* ─── booking + payment state ────────────────── */
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,8 +107,10 @@ export default function BookRoomPage() {
   const daysUntilCheckIn = checkIn ? daysBetween(checkIn) : 0;
   const isPartialEligible = settings?.partial_payment_enabled ? (daysUntilCheckIn >= 15) : false;
 
-  const baseTotal = room ? room.price * nights * (isMultiRoom ? 1 : roomsCount) : 0;
-  const serviceCharge = settings?.service_charge || 500;
+  const roomPrice = room ? (getRoomPrice(room) ?? 0) : 0;
+  const baseTotal = roomPrice * nights * (isMultiRoom ? 1 : roomsCount);
+  // Use dynamic values from API — never hardcode financial amounts
+  const serviceCharge = settings?.service_charge ?? 0;
   const taxes = Math.round(baseTotal * 0.12);
 
   const couponDiscount = useMemo(() => {
@@ -112,7 +123,7 @@ export default function BookRoomPage() {
   }, [appliedCoupon, baseTotal]);
 
   const grandTotal = Math.max(0, baseTotal + serviceCharge + taxes - couponDiscount);
-  const depositPct = settings?.deposit_percent || 30;
+  const depositPct = settings?.deposit_percent ?? 0;
   const depositAmount = Math.round(grandTotal * (depositPct / 100));
   const amountToCharge = paymentMode === "partial" && isPartialEligible ? depositAmount : grandTotal;
 
@@ -121,13 +132,14 @@ export default function BookRoomPage() {
     const token = getAccessToken();
     if (!token) { 
       const currentUrl = window.location.pathname + window.location.search;
-      sessionStorage.setItem('auth_return_url', currentUrl);
       const ctx = {
         checkIn, checkOut, adults, children, childrenAges, firstName, lastName, email, phone, countryCode,
         rooms: requestedRooms, roomsCount
       };
       sessionStorage.setItem('auth_booking_context', JSON.stringify(ctx));
-      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
+      startTransition(() => {
+        router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
+      });
       return; 
     }
 
@@ -144,7 +156,7 @@ export default function BookRoomPage() {
                 id: -1,
                 name: fetchedRooms.map(r => r.name).join(' + '),
                 capacity: fetchedRooms.reduce((sum, r) => sum + r.capacity, 0),
-                price: fetchedRooms.reduce((sum, r) => sum + r.price, 0),
+                price: fetchedRooms.reduce((sum, r) => sum + (getRoomPrice(r) ?? 0), 0),
               };
             }
             return { success: true, room: aggregatedRoom };
@@ -160,7 +172,7 @@ export default function BookRoomPage() {
           roomDataPromise,
           authApi.getProfile().catch(() => ({ success: false, user: null })),
           couponsApi.getCoupons().catch(() => ({ success: false, coupons: [] })),
-          settingsApi.getPaymentSettings().catch(() => ({ success: false, settings: { partial_payment_enabled: true, deposit_percent: 30, service_charge: 500, cancellation_window_days: 3 } }))
+          settingsApi.getPaymentSettings().catch(() => ({ success: false, settings: null }))
         ]);
 
         if (aggregatedRoom) setRoom(aggregatedRoom as Room);
@@ -168,6 +180,10 @@ export default function BookRoomPage() {
 
         if (settingsRes.success && settingsRes.settings) {
           setSettings(settingsRes.settings);
+        } else {
+          // Block checkout if settings cannot be loaded — never guess financial values
+          setSettingsError(true);
+          setError("Unable to load payment settings. Please refresh and try again.");
         }
 
         if (profileRes.success && profileRes.user) {
@@ -231,7 +247,7 @@ export default function BookRoomPage() {
         } else if (new Date(match.valid_until) < new Date()) {
           setCouponError("This coupon has expired.");
         } else if (baseTotal < match.min_amount) {
-          setCouponError(`Minimum booking value ₹${match.min_amount.toLocaleString()} required.`);
+          setCouponError(`Minimum booking value ${formatPrice(match.min_amount)} required.`);
         } else {
           setAppliedCoupon(match);
         }
@@ -299,7 +315,7 @@ export default function BookRoomPage() {
       check_in_date: checkIn,
       check_out_date: checkOut,
       number_of_adults: Number(adults) || 1,
-      number_of_children: Number(children) || 0,
+      // children_ages is the authoritative field; number_of_children is derived from it
       ...(childrenAges.length > 0 ? { children_ages: childrenAges } : {}),
       guests: [
         {
@@ -324,7 +340,16 @@ export default function BookRoomPage() {
         setSubmitError(res.message || "Failed to create booking.");
       }
     } catch (err: any) {
-      setSubmitError(err.message || "An error occurred during booking.");
+      // Handle specific error codes gracefully
+      if (err?.status === 409) {
+        setSubmitError("This room is no longer available for the selected dates. Please go back and select different dates or a different room.");
+      } else if (err?.status === 422) {
+        setSubmitError(err.message || "Booking details are invalid. Please check your inputs.");
+      } else if (err?.status === 400) {
+        setSubmitError(err.message || "Invalid booking request. Please review your details.");
+      } else {
+        setSubmitError(err.message || "An error occurred during booking. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -336,7 +361,7 @@ export default function BookRoomPage() {
     setSubmitError("");
 
     try {
-      const paymentRes = await paymentApi.initiatePayment(bookingId);
+      const paymentRes = await paymentApi.initiatePayment(bookingId, { payment_mode: paymentMode });
 
       if (paymentRes.success && paymentRes.payment) {
         const { payment } = paymentRes;
@@ -372,14 +397,14 @@ export default function BookRoomPage() {
               if (verifyRes.success) {
                 pushGtmEvent("booking_complete", { booking_id: bookingId });
                 setShowSuccess(true);
-                setTimeout(() => router.push("/profile"), 3500);
+                setTimeout(() => { startTransition(); router.push("/profile"); }, 3500);
               } else {
                 setSubmitError("Payment verification failed. Check your profile.");
-                setTimeout(() => router.push("/profile"), 2000);
+                setTimeout(() => { startTransition(); router.push("/profile"); }, 2000);
               }
             } catch {
               setSubmitError("Error verifying payment.");
-              setTimeout(() => router.push("/profile"), 2000);
+              setTimeout(() => { startTransition(); router.push("/profile"); }, 2000);
             }
           },
           theme: { color: "#5f181f" },
@@ -454,7 +479,7 @@ export default function BookRoomPage() {
             </p>
             {paymentMode === "partial" && isPartialEligible && (
               <p className="mt-3 text-sm font-serif text-[var(--maroon)] animate-fade-up animate-fade-up-delay-2 bg-[var(--gold)]/10 border border-[var(--gold)]/30 px-4 py-2">
-                ₹{depositAmount.toLocaleString()} deposit paid · Balance ₹{(grandTotal - depositAmount).toLocaleString()} due at check-in
+                {formatPrice(depositAmount)} deposit paid · Balance {formatPrice(grandTotal - depositAmount)} due at check-in
               </p>
             )}
             <div className="mt-8 animate-fade-up animate-fade-up-delay-3 flex flex-col items-center gap-3">
@@ -710,26 +735,26 @@ export default function BookRoomPage() {
                   {/* Price breakdown */}
                   <div className="space-y-3 text-sm font-serif">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">₹{room.price.toLocaleString()} × {nights} night{nights !== 1 ? "s" : ""}</span>
-                      <span>₹{baseTotal.toLocaleString()}</span>
+                      <span className="text-muted-foreground">{formatPrice(roomPrice)} × {nights} night{nights !== 1 ? "s" : ""}</span>
+                      <span>{formatPrice(baseTotal)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Service charges (5%)</span>
-                      <span>₹{serviceCharge.toLocaleString()}</span>
+                      <span>{formatPrice(serviceCharge)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">GST (12%)</span>
-                      <span>₹{taxes.toLocaleString()}</span>
+                      <span>{formatPrice(taxes)}</span>
                     </div>
                     {couponDiscount > 0 && (
                       <div className="flex justify-between text-[oklch(0.45_0.13_150)]">
                         <span>Coupon discount ({appliedCoupon?.code})</span>
-                        <span>−₹{Math.round(couponDiscount).toLocaleString()}</span>
+                        <span>−{formatPrice(Math.round(couponDiscount))}</span>
                       </div>
                     )}
                     <div className="pt-3 border-t border-[var(--gold)]/30 flex justify-between items-center">
                       <span className="text-xs uppercase tracking-widest text-[var(--maroon)]">Total</span>
-                      <span className="text-display text-3xl gold-text">₹{grandTotal.toLocaleString()}</span>
+                      <span className="text-display text-3xl gold-text">{formatPrice(grandTotal)}</span>
                     </div>
                   </div>
                 </div>
@@ -749,7 +774,7 @@ export default function BookRoomPage() {
                         <svg className="w-5 h-5 text-[oklch(0.45_0.13_150)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12l5 5L20 7" /></svg>
                         <div>
                           <p className="text-sm font-medium text-[oklch(0.32_0.13_150)]">{appliedCoupon.code} applied</p>
-                          <p className="text-xs text-muted-foreground">{appliedCoupon.description} · Saving ₹{Math.round(couponDiscount).toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">{appliedCoupon.description} · Saving {formatPrice(Math.round(couponDiscount))}</p>
                         </div>
                       </div>
                       <button onClick={handleRemoveCoupon} className="text-xs uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors">Remove</button>
@@ -792,7 +817,7 @@ export default function BookRoomPage() {
                 </div>
 
                 {/* Free Cancellation Section */}
-                {settings?.cancellation_window_days > 0 && (
+                {(settings?.cancellation_window_days ?? 0) > 0 && (
                   <div className="bg-card border border-[var(--gold)]/30 p-6 shadow-[var(--shadow-soft)]">
                     <label className="flex items-start gap-4 cursor-pointer group">
                       <div className="relative mt-1 shrink-0">
@@ -811,7 +836,7 @@ export default function BookRoomPage() {
                       <div>
                         <h3 className="text-display text-xl text-[var(--maroon)]">Free Cancellation</h3>
                         <p className="text-xs text-muted-foreground mt-1 font-serif">
-                          Opt-in for free cancellation. You can cancel your booking up to {settings.cancellation_window_days} days before check-in for a full refund.
+                          Opt-in for free cancellation. You can cancel your booking up to {settings?.cancellation_window_days} days before check-in for a full refund.
                         </p>
                       </div>
                     </label>
@@ -933,7 +958,7 @@ export default function BookRoomPage() {
                 {/* Confirm CTA */}
                 <button
                   onClick={handleConfirmBooking}
-                  disabled={isSubmitting || isInitiatingPayment}
+                  disabled={isSubmitting || isInitiatingPayment || !settings}
                   className="w-full py-5 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-all duration-300 shadow-[var(--shadow-gold)] disabled:opacity-70 flex items-center justify-center gap-3 relative overflow-hidden group"
                 >
                   {(isSubmitting || isInitiatingPayment) ? (

@@ -202,13 +202,12 @@
   .ken-burns {
     animation: kenBurns 18s ease-in-out infinite alternate;
   }
-  /* Royal form inputs */
   .input-royal {
     width: 100%;
     background: oklch(0.985 0.012 85);
     border: 1px solid color-mix(in oklab, var(--gold) 40%, transparent);
     padding: 0.75rem 1rem;
-    font-family: var(--font-cormorant), ui-serif, serif;
+    font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
     color: var(--foreground);
     font-size: 1rem;
     transition: border-color 0.3s, box-shadow 0.3s;
@@ -306,7 +305,64 @@
   will-change: transform, opacity;
 }
 
+/* Page Transition Animations */
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.97); }
+}
+.animate-pulse-slow {
+  animation: pulseSlow 3s ease-in-out infinite;
+}
+
+@keyframes typingDots {
+  0% { content: "."; }
+  33% { content: ".."; }
+  66% { content: "..."; }
+  100% { content: "."; }
+}
+.animate-typing-dots::after {
+  content: "...";
+  animation: typingDots 1.5s infinite;
+  display: inline-block;
+  width: 1ch;
+  text-align: left;
+}
+.animate-typing-dots {
+  color: transparent; /* hide the actual text, show pseudo */
+  position: relative;
+}
+.animate-typing-dots::before {
+  content: "...";
+  position: absolute;
+  color: var(--parchment);
+  left: 0;
+  animation: typingDots 1.5s steps(1, end) infinite;
+}
+
+/* Floating Particles */
+@keyframes floatParticle {
+  0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-100px) scale(0) rotate(45deg); opacity: 0; }
+}
+.particle {
+  position: absolute;
+  background: var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 10px 2px var(--gold);
+  animation: floatParticle 8s infinite linear;
+  will-change: transform, opacity;
+}
+.particle-1 { width: 4px; height: 4px; left: 20%; bottom: 10%; animation-delay: 0s; animation-duration: 6s; }
+.particle-2 { width: 2px; height: 2px; left: 40%; bottom: -5%; animation-delay: 2s; animation-duration: 9s; }
+.particle-3 { width: 3px; height: 3px; left: 60%; bottom: 15%; animation-delay: 4s; animation-duration: 7s; }
+.particle-4 { width: 5px; height: 5px; left: 80%; bottom: 5%; animation-delay: 1s; animation-duration: 10s; }
+.particle-5 { width: 2px; height: 2px; left: 50%; bottom: 0%; animation-delay: 5s; animation-duration: 8s; }
+
 @media (prefers-reduced-motion: reduce) {
   .moon-pulse { animation: none; }
   .moon-diagonal { animation: none; }
+  .animate-pulse-slow { animation: none; transform: scale(1); opacity: 1; }
+  .particle { display: none; }
 }

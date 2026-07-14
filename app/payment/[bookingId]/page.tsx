@@ -10,6 +10,7 @@ import { getAccessToken } from "@/lib/api/apiClient";
 import Script from "next/script";
 import { Ornament } from "@/components/site/Ornament";
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
+import { useTransition } from "@/components/transitions/TransitionContext";
 import { pushGtmEvent } from "@/lib/analytics/gtm";
 
 type PaymentMode = "full" | "partial" | "balance";
@@ -22,8 +23,10 @@ function daysBetween(dateStr: string): number {
 }
 
 export default function PaymentPage() {
-  const { bookingId } = useParams();
   const router = useRouter();
+  const params = useParams();
+  const { startTransition } = useTransition();
+  const bookingId = params.bookingId as string;
 
   /* ─── data ───────────────────────────────────── */
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -77,8 +80,8 @@ export default function PaymentPage() {
   useEffect(() => {
     const token = getAccessToken();
     if (!token) { 
-      const currentUrl = window.location.pathname + window.location.search;
-      sessionStorage.setItem('auth_return_url', currentUrl);
+      const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '';
+      startTransition();
       router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
       return; 
     }
@@ -233,14 +236,14 @@ export default function PaymentPage() {
               if (verifyRes.success) {
                 pushGtmEvent("booking_complete", { booking_id: booking.id });
                 setShowSuccess(true);
-                setTimeout(() => router.push("/profile"), 3500);
+                setTimeout(() => { startTransition(); router.push("/profile"); }, 3500);
               } else {
                 setPaymentError("Payment verification failed. Please check your profile.");
-                setTimeout(() => router.push("/profile"), 2000);
+                setTimeout(() => { startTransition(); router.push("/profile"); }, 2000);
               }
             } catch {
               setPaymentError("Error verifying payment.");
-              setTimeout(() => router.push("/profile"), 2000);
+              setTimeout(() => { startTransition(); router.push("/profile"); }, 2000);
             }
           },
           theme: { color: "#5f181f" },

@@ -18,11 +18,11 @@ export const DEFAULT_OG_IMAGE = OG_IMAGES.home;
 export const CONTACT = {
   email:
     process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
-    "heritage@kilatheheritagepalace.com",
+    "team@kilatheheritagepalace.com",
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 9898203503",
   phoneDisplay: process.env.NEXT_PUBLIC_CONTACT_PHONE_DISPLAY || "+91 9898203503",
   whatsapp:
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "917551234567",
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "91 9898203503",
   address: {
     street: "1 Kila Kothi, Near Kila Road, Kothi",
     locality: "Kothi, Satna",
@@ -38,7 +38,7 @@ export const SOCIAL = {
     "https://www.tripadvisor.in/Hotel-Kila_Kothi_Satna",
   instagram:
     process.env.NEXT_PUBLIC_INSTAGRAM_URL ||
-    "https://www.instagram.com/kilatheheritagepalace",
+    "https://www.instagram.com/kilatheheritagepalacekothi/",
 };
 
 export const HOTEL_GEO = {

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { Ornament } from "@/components/site/Ornament";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { SITE_NAME, CONTACT } from "@/lib/seo/site";
@@ -13,7 +13,8 @@ export const metadata: Metadata = pageMetadata({
 
 export default function PrivacyPage() {
   return (
-    <article className="mx-auto max-w-3xl px-6 py-20 lg:px-10">
+    <article className="mx-auto max-w-3xl px-6 pt-32 pb-20 lg:px-10">
+      
       <p className="eyebrow">Legal</p>
       <h1 className="text-display text-4xl md:text-5xl mt-4 text-[var(--maroon)]">Privacy Policy</h1>
       <Ornament className="mt-6 w-24 text-[var(--gold)]" />

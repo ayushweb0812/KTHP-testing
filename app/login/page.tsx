@@ -1,132 +1,59 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import Script from 'next/script';
+import React, { useRef } from 'react';
+import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { useRouter } from 'next/navigation';
+import { useTransition } from '@/components/transitions/TransitionContext';
 import { Ornament } from '@/components/site/Ornament';
 import { authApi } from '@/lib/api/auth';
+import { GoogleAuthWrapper } from '@/components/auth/GoogleAuthWrapper';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [isSecureContext, setIsSecureContext] = useState(true);
-  
-  const initialized = useRef(false);
-  const buttonContainerRef = useRef<HTMLDivElement>(null);
+  const { startTransition } = useTransition();
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const isAuthenticating = useRef(false);
 
-  useEffect(() => {
-    // Check secure context
-    const hostname = window.location.hostname;
-    const isSecure =
-      window.isSecureContext ||
-      window.location.protocol === 'https:' ||
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1';
-    setIsSecureContext(isSecure);
-    
-    // If script is already loaded (e.g. client side navigation), init immediately
-    if (window.google && window.google.accounts && !initialized.current) {
-      initGoogleLogin();
-    }
-    
-    // Cleanup on unmount to cancel any outstanding FedCM / GSI prompts
-    return () => {
-      if (window.google?.accounts?.id) {
-        window.google.accounts.id.cancel();
-      }
-    };
-  }, []);
-
-  const handleCredentialResponse = async (response: any) => {
+  const handleAuthSuccess = async (credential: string) => {
     if (isAuthenticating.current) return;
     isAuthenticating.current = true;
-    setIsLoading(true);
-    setError('');
     
     try {
-      if (response.credential) {
-        const res = await authApi.googleLogin(response.credential);
-        if (res.success) {
-          window.dispatchEvent(new Event('auth-change'));
-          
-          let redirectUrl = null;
-          
-          if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            redirectUrl = params.get('redirect');
-            if (!redirectUrl) {
-              redirectUrl = sessionStorage.getItem('auth_return_url');
-            }
+      console.log("[Google Auth] Sending credential to backend for validation...");
+      const res = await authApi.googleLogin(credential);
+      
+      if (res.success) {
+        console.log("[Google Auth] Backend authentication successful.");
+        window.dispatchEvent(new Event('auth-change'));
+        
+        let redirectUrl = null;
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          redirectUrl = params.get('redirect');
+          if (!redirectUrl) {
+            redirectUrl = sessionStorage.getItem('auth_return_url');
           }
-          
-          if (redirectUrl && redirectUrl.startsWith('/')) {
-            sessionStorage.removeItem('auth_return_url');
-            // Do NOT remove auth_booking_context here, let the destination page read it first.
-            router.push(redirectUrl);
-          } else {
-            router.push('/profile/personal-details');
-          }
+        }
+        
+        if (redirectUrl && redirectUrl.startsWith('/')) {
+          sessionStorage.removeItem('auth_return_url');
+          startTransition();
+          router.push(redirectUrl);
         } else {
-          throw new Error('Backend authentication failed');
+          startTransition();
+          router.push('/profile/personal-details');
         }
       } else {
-        throw new Error('No credential received from Google');
+        throw new Error('Backend authentication failed');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to authenticate with Google.');
     } finally {
-      setIsLoading(false);
       isAuthenticating.current = false;
-    }
-  };
-
-  const initGoogleLogin = () => {
-    if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
-    if (initialized.current) return;
-    
-    initialized.current = true;
-    
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "64609693042-2lg4esbh0og01p86lemhs56l6lnk6jk4.apps.googleusercontent.com";
-
-    // Single Initialization Pattern
-    window.google.accounts.id.initialize({
-      client_id: googleClientId,
-      callback: handleCredentialResponse,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
-
-    // Render custom button
-    if (buttonContainerRef.current) {
-      window.google.accounts.id.renderButton(buttonContainerRef.current, {
-        theme: "outline",
-        size: "large",
-        shape: "rectangular",
-        text: "signin_with",
-        width: 250
-      });
-    }
-
-    // Trigger one-tap prompt if no errors
-    if (!error) {
-      window.google.accounts.id.prompt();
     }
   };
 
   return (
     <div className="min-h-screen paper-grain flex items-center justify-center py-20 px-4 relative overflow-hidden">
       
-      {/* Load GSI Script */}
-      <Script 
-        src="https://accounts.google.com/gsi/client" 
-        strategy="afterInteractive" 
-        onLoad={initGoogleLogin}
-        onReady={initGoogleLogin}
-      />
-
       {/* Background ambient gradient */}
       <div className="absolute inset-0 bg-[var(--gradient-vignette)] pointer-events-none" />
 
@@ -151,43 +78,9 @@ export default function LoginPage() {
             Enter the grand gates of the heritage palace. Sign in to manage your royal stays, view your invoices, and update your profile.
           </p>
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded text-sm">
-              {error}
-            </div>
-          )}
-
           {/* Login Actions */}
           <div className="space-y-6">
-            
-            {isSecureContext ? (
-              <div className="flex justify-center w-full bg-white rounded-md border border-gray-200 shadow-sm overflow-visible py-1 relative z-20 min-h-[44px]">
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-2 w-full">
-                    <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-                    <span className="ml-3 text-sm text-gray-700 font-medium">Authenticating...</span>
-                  </div>
-                ) : (
-                  <div className="w-full flex justify-center py-1" ref={buttonContainerRef}>
-                    {/* Google button will render here */}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="w-full bg-amber-50 border border-amber-200 rounded-md p-4 text-left">
-                <p className="text-sm font-semibold text-amber-800 mb-1">
-                  ⚠ Secure connection required
-                </p>
-                <p className="text-xs text-amber-700 leading-relaxed">
-                  Google Sign-In requires HTTPS or localhost. You&apos;re currently accessing this page over an insecure connection 
-                  (<code className="bg-amber-100 px-1 rounded text-[11px]">{typeof window !== 'undefined' ? window.location.origin : ''}</code>).
-                </p>
-                <p className="text-xs text-amber-700 mt-2 leading-relaxed">
-                  To fix: access via <code className="bg-amber-100 px-1 rounded text-[11px]">http://localhost:3000</code> or deploy with HTTPS.
-                </p>
-              </div>
-            )}
-
+            <GoogleAuthWrapper onSuccess={handleAuthSuccess} buttonWidth={280} />
           </div>
 
           <div className="mt-10 pt-6 border-t border-[color-mix(in_oklab,var(--gold)_20%,transparent)]">

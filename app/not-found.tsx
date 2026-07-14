@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/site/TransitionLink";
 
 // app/not-found.tsx — replaces NotFoundComponent from __root.tsx
 export default function NotFound() {

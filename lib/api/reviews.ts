@@ -54,8 +54,7 @@ export const reviewsApi = {
   },
 
   async getPublicReviews(): Promise<{ success: boolean; total: number; limit: number; offset: number; reviews: Review[] }> {
-    // Note: The doc mentions /reviews or /api/reviews without auth
-    return fetchClient<{ success: boolean; total: number; limit: number; offset: number; reviews: Review[] }>('/reviews', {
+    return fetchClient<{ success: boolean; total: number; limit: number; offset: number; reviews: Review[] }>('/api/reviews/public', {
       method: 'GET',
     });
   }

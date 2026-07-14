@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { bookingsApi, Booking } from '@/lib/api/bookings';
+import { bookingsApi, Booking, BookingRoom } from '@/lib/api/bookings';
 import { invoicesApi } from '@/lib/api/invoices';
 import { roomsApi, Room } from '@/lib/api/rooms';
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
@@ -32,8 +32,13 @@ function BookingDetailModal({
 
   const isPaid = booking.payment_status === 'paid' || booking.status === 'paid';
   const isPartial = booking.payment_status === 'partial';
-  const bookingRooms = booking.rooms?.length ? booking.rooms : (booking.room_id !== undefined ? [{ room_id: booking.room_id }] : []);
-  const mainRoom = bookingRooms.length > 0 ? roomsMap[bookingRooms[0].room_id || bookingRooms[0].id] : undefined;
+  const isCancelRequested = booking.status === 'cancel_requested';
+  const bookingRooms: BookingRoom[] = booking.rooms?.length
+    ? booking.rooms
+    : booking.room_id !== undefined
+    ? [{ room_id: booking.room_id }]
+    : [];
+  const mainRoom = bookingRooms.length > 0 ? roomsMap[bookingRooms[0].room_id ?? bookingRooms[0].id ?? 0] : undefined;
   
   const roomName = bookingRooms.length > 1 
     ? `Multiple Rooms (${bookingRooms.length})` 
@@ -83,9 +88,19 @@ function BookingDetailModal({
           {/* Header */}
           <div className="relative shrink-0">
             {roomImage ? (
-              <div className="aspect-[21/9] overflow-hidden">
-                <img src={roomImage} alt={roomName} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--maroon-deep)]/85 via-[var(--maroon-deep)]/30 to-transparent" />
+              <div className="aspect-[21/9] overflow-hidden bg-[#f4ebd0] relative">
+                <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center z-0">
+                  <img src="/logo (1).svg" alt="Kila" className="h-24 w-auto object-contain opacity-70" />
+                </div>
+                <img 
+                  src={roomImage} 
+                  alt={roomName} 
+                  className="w-full h-full object-cover absolute inset-0 z-10"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--maroon-deep)]/85 via-[var(--maroon-deep)]/30 to-transparent pointer-events-none z-20" />
               </div>
             ) : (
               <div className="h-48 bg-gradient-to-r from-[var(--maroon-deep)] to-[var(--maroon)]" />
@@ -112,11 +127,13 @@ function BookingDetailModal({
               ? "border-green-500/40 bg-green-50 text-green-700"
               : isPartial
               ? "border-blue-400/40 bg-blue-50 text-blue-600"
+              : isCancelRequested
+              ? "border-orange-400/40 bg-orange-50 text-orange-700"
               : booking.status === "cancelled"
               ? "border-red-400/40 bg-red-50 text-red-600"
               : "border-[var(--gold)]/40 bg-[var(--gold)]/8 text-[var(--maroon)]"
           }`}>
-            {isPaid ? "Confirmed" : isPartial ? "Confirmed (Partial)" : booking.status === "cancelled" ? "Cancelled" : "Pending Payment"}
+          {isPaid ? "Confirmed" : isPartial ? "Confirmed (Partial)" : isCancelRequested ? "Cancellation Requested" : booking.status === "cancelled" ? "Cancelled" : "Pending Payment"}
           </span>
           <span className="text-sm text-muted-foreground font-serif">
             Booked {fmt(booking.created_at)}
@@ -150,8 +167,13 @@ function BookingDetailModal({
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <div className="text-base font-serif text-foreground">
-              {booking.number_of_adults} Adult{booking.number_of_adults > 1 ? "s" : ""}
-              {booking.number_of_children > 0 ? `, ${booking.number_of_children} Child${booking.number_of_children > 1 ? "ren" : ""}` : ""}
+            {booking.number_of_adults} Adult{booking.number_of_adults > 1 ? "s" : ""}
+              {/* Use children[] array when available (backend now returns individual ages) */}
+              {booking.children && booking.children.length > 0
+                ? `, ${booking.children.length} Child${booking.children.length > 1 ? "ren" : ""}`
+                : booking.number_of_children > 0
+                ? `, ${booking.number_of_children} Child${booking.number_of_children > 1 ? "ren" : ""}`
+                : ""}
               {booking.children && booking.children.length > 0 && (
                  <span className="text-xs text-muted-foreground ml-2">(Ages: {booking.children.map(c => c.age).join(", ")})</span>
               )}
@@ -334,6 +356,10 @@ export default function TripsPage() {
   // Modal state
   const [detailBooking, setDetailBooking] = useState<Booking | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 4;
+
   useEffect(() => {
     let mounted = true;
     Promise.all([
@@ -425,6 +451,9 @@ export default function TripsPage() {
     return true;
   });
 
+  const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE);
+  const paginatedBookings = filteredBookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
   return (
     <>
       {/* Detail Modal */}
@@ -447,7 +476,10 @@ export default function TripsPage() {
             {(['UPCOMING TRIPS', 'PAST STAYS', 'PAYMENTS'] as Tab[]).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setCurrentPage(1);
+                }}
                 className={`pb-4 text-[10px] tracking-[0.2em] uppercase transition-colors relative font-semibold ${
                   activeTab === tab ? 'text-[var(--gold)]' : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
                 }`}
@@ -494,9 +526,9 @@ export default function TripsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredBookings.map((booking) => {
-                      const bookingRooms = booking.rooms?.length ? booking.rooms : (booking.room_id !== undefined ? [{ room_id: booking.room_id }] : []);
-                      const mainRoom = bookingRooms.length > 0 ? rooms[bookingRooms[0].room_id || bookingRooms[0].id] : undefined;
+                    {paginatedBookings.map((booking) => {
+                      const bookingRooms: BookingRoom[] = booking.rooms?.length ? booking.rooms : (booking.room_id !== undefined ? [{ room_id: booking.room_id }] : []);
+                      const mainRoom = bookingRooms.length > 0 ? rooms[bookingRooms[0].room_id ?? bookingRooms[0].id ?? 0] : undefined;
                       const roomName = bookingRooms.length > 1 
                         ? `Multiple Rooms (${bookingRooms.length})` 
                         : mainRoom?.name || "Heritage Chamber";
@@ -517,7 +549,7 @@ export default function TripsPage() {
                       return (
                         <tr key={`payment-${booking.id}`} className="border-b border-[var(--gold)]/20 last:border-0 hover:bg-[#fcfaf5]/50 transition-colors">
                           <td className="py-6 px-8 text-[13px] text-[#888]">{formattedDate}</td>
-                          <td className="py-6 px-8 text-[13px] text-[#888]">{mainRoom?.name?.includes('Suite') || roomName.includes('Apartment') ? 'Royal Suite' : 'Heritage Room'}</td>
+                          <td className="py-6 px-8 text-[13px] text-[#888]">{roomName}</td>
                           <td className="py-6 px-8 text-[13px] text-[#888]">₹{booking.total_price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           <td className={`py-6 px-8 text-[10px] uppercase tracking-[0.2em] font-semibold ${statusColor}`}>
                             {statusText}
@@ -529,9 +561,9 @@ export default function TripsPage() {
                 </table>
               </div>
             ) : (
-              filteredBookings.map((booking) => {
-                const bookingRooms = booking.rooms?.length ? booking.rooms : (booking.room_id !== undefined ? [{ room_id: booking.room_id }] : []);
-                const mainRoom = bookingRooms.length > 0 ? rooms[bookingRooms[0].room_id || bookingRooms[0].id] : undefined;
+              paginatedBookings.map((booking) => {
+                const bookingRooms: BookingRoom[] = booking.rooms?.length ? booking.rooms : (booking.room_id !== undefined ? [{ room_id: booking.room_id }] : []);
+                const mainRoom = bookingRooms.length > 0 ? rooms[bookingRooms[0].room_id ?? bookingRooms[0].id ?? 0] : undefined;
                 
                 const roomName = bookingRooms.length > 1 
                   ? `Multiple Rooms (${bookingRooms.length})` 
@@ -552,13 +584,24 @@ export default function TripsPage() {
                     className="bg-white border border-[var(--gold)]/20 shadow-sm flex flex-col md:flex-row overflow-hidden"
                   >
                     {/* Image Section */}
-                    <div className="w-full md:w-[320px] h-48 md:h-auto shrink-0 relative">
+                    <div className="w-full md:w-[320px] h-48 md:h-auto shrink-0 relative bg-[#f4ebd0]">
                       {roomImage ? (
-                        <img src={roomImage} alt={roomName} className="w-full h-full object-cover" />
+                        <>
+                          <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center z-0">
+                            <img src="/logo (1).svg" alt="Kila" className="h-16 w-auto object-contain opacity-70" />
+                          </div>
+                          <img 
+                            src={roomImage} 
+                            alt={roomName} 
+                            className="w-full h-full object-cover absolute inset-0 z-10" 
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </>
                       ) : (
-                        <div className="w-full h-full bg-[#f4ebd0] flex flex-col items-center justify-center">
-                          <span className="text-[var(--gold)] font-display text-2xl mb-2">क</span>
-                          <div className="text-[var(--gold)] font-display text-[10px] tracking-[0.2em] uppercase">Kila</div>
+                        <div className="w-full h-full flex flex-col items-center justify-center">
+                          <img src="/logo (1).svg" alt="Kila" className="h-16 w-auto object-contain opacity-70" />
                         </div>
                       )}
                     </div>
@@ -588,7 +631,11 @@ export default function TripsPage() {
                           <p className="text-[8px] uppercase tracking-[0.25em] text-[var(--muted-foreground)] mb-1.5">Guests</p>
                           <p className="text-[13px] text-[var(--foreground)] tracking-wide">
                             {booking.number_of_adults} Adults
-                            {booking.number_of_children > 0 ? ` . ${booking.number_of_children} Child` : ''}
+                         {booking.children && booking.children.length > 0
+                              ? ` · ${booking.children.length} Child${booking.children.length > 1 ? 'ren' : ''}`
+                              : booking.number_of_children > 0
+                              ? ` · ${booking.number_of_children} Child`
+                              : ''}
                           </p>
                         </div>
                       </div>
@@ -609,6 +656,7 @@ export default function TripsPage() {
                         View Details
                       </button>
                       <button
+                        onClick={() => setDetailBooking(booking)}
                         className="w-full py-2.5 border border-[#cba052]/40 text-[var(--muted-foreground)] text-[9px] uppercase tracking-[0.2em] font-medium hover:border-[#cba052] hover:text-[#cba052] transition-colors"
                       >
                         Manage
@@ -617,6 +665,28 @@ export default function TripsPage() {
                   </div>
                 );
               })
+            )}
+            
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[var(--gold)]/10">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-full border border-[var(--gold)]/40 text-[var(--gold)] disabled:opacity-30 hover:bg-[var(--gold)]/10 transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" /></svg>
+                </button>
+                <span className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-full border border-[var(--gold)]/40 text-[var(--gold)] disabled:opacity-30 hover:bg-[var(--gold)]/10 transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" /></svg>
+                </button>
+              </div>
             )}
           </div>
         )}

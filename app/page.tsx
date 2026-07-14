@@ -206,15 +206,7 @@ export default async function HomePage() {
                         <img src={r.img} alt={r.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-4 group-hover:scale-105 transition-transform duration-1000 opacity-70">
-                          <div className="w-20 h-20 rounded-full border border-[var(--gold)]/60 flex items-center justify-center">
-                            <span className="text-[var(--gold)] text-display text-4xl">क</span>
-                          </div>
-                          <div className="leading-none text-center">
-                            <div className="text-[var(--gold)] text-display text-3xl tracking-wide mb-2">KILA</div>
-                            <div className="text-[10px] uppercase tracking-[0.32em] text-[var(--gold)]/70">
-                              The Heritage Palace
-                            </div>
-                          </div>
+                          <img src="/logo (1).svg" alt="Kila The Heritage Palace" className="h-32 w-auto object-contain" />
                         </div>
                       )}
                     </div>

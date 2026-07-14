@@ -2,12 +2,14 @@
 
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import { RoomWatermark } from "@/components/site/RoomWatermark";
 import { Ornament } from "@/components/site/Ornament";
 import { roomsApi, Room, Combo } from "@/lib/api/rooms";
 import { EnquiryModal } from "@/components/site/EnquiryModal";
 import { RoomDetailsModal } from "@/components/site/RoomDetailsModal";
+import { getComboPrice, getComboDiscountedPrice, getRoomPrice, formatPrice } from "@/lib/utils/pricing";
 
 type Tab = "rooms" | "wedding" | "other";
 
@@ -18,10 +20,21 @@ const OTHER_OPTIONS = [
 ];
 
 export default function ReserveClient() {
-  const [tab, setTab] = useState<Tab>("rooms");
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams?.get("tab") as Tab) || "rooms";
+  
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
   const [enquiryType, setEnquiryType] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    const t = searchParams?.get("tab") as Tab;
+    if (t && ["rooms", "wedding", "other"].includes(t)) {
+      setTab(t);
+      // scroll to tabs if needed, but for now just set it
+    }
+  }, [searchParams]);
 
   const openEnquiryModal = (type: string) => {
     setEnquiryType(type);
@@ -104,6 +117,7 @@ function RoomsList({ onSearchStateChange }: { onSearchStateChange?: (s: boolean)
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
 
   const [hasSearched, setHasSearched] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(3);
   const [checkIn, setCheckIn] = useState(() => {
     const d = new Date();
     return d.toISOString().split('T')[0];
@@ -166,8 +180,9 @@ function RoomsList({ onSearchStateChange }: { onSearchStateChange?: (s: boolean)
 
         setRooms(foundRooms);
         setCombos(foundCombos);
-        setRequiredCapacity(response.required_capacity || adults + childrenCount);
+        setRequiredCapacity(response.required_capacity ?? 0);
         setHasSearched(true);
+        setVisibleCount(3); // Reset to 3 on new search
         if (onSearchStateChange) onSearchStateChange(true);
       } else {
         setError("Failed to load rooms");
@@ -184,12 +199,12 @@ function RoomsList({ onSearchStateChange }: { onSearchStateChange?: (s: boolean)
       <div className="space-y-10 animate-fade-up">
         <div className="bg-card border border-[var(--gold)]/30 p-6 shadow-[var(--shadow-royal)] max-w-4xl mx-auto">
         <form onSubmit={handleSearch} className="flex flex-col gap-6">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1 min-w-[140px]">
+          <div className="grid grid-cols-2 md:flex md:flex-row gap-4 md:items-end">
+            <div className="w-full md:flex-1 md:min-w-[140px]">
               <label className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Check In</label>
               <input type="date" required value={checkIn} onChange={e => setCheckIn(e.target.value)} className="w-full bg-background border border-[var(--gold)]/30 px-4 py-3 text-sm focus:border-[var(--gold)] outline-none transition-colors" />
             </div>
-            <div className="flex-1 min-w-[140px]">
+            <div className="w-full md:flex-1 md:min-w-[140px]">
               <label className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Check Out</label>
               <input type="date" required value={checkOut} onChange={e => setCheckOut(e.target.value)} className="w-full bg-background border border-[var(--gold)]/30 px-4 py-3 text-sm focus:border-[var(--gold)] outline-none transition-colors" />
             </div>
@@ -216,13 +231,15 @@ function RoomsList({ onSearchStateChange }: { onSearchStateChange?: (s: boolean)
                 ))}
               </select>
             </div>
-            <div className="w-full md:w-24">
-              <label className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Rooms</label>
-              <select value={roomsCount} onChange={e => setRoomsCount(parseInt(e.target.value))} className="w-full bg-background border border-[var(--gold)]/30 px-4 py-3 text-sm focus:border-[var(--gold)] outline-none transition-colors appearance-none">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+            <div className="col-span-2 flex justify-center md:block md:col-span-1 md:w-24">
+              <div className="w-[calc(50%-0.5rem)] md:w-full">
+                <label className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Rooms</label>
+                <select value={roomsCount} onChange={e => setRoomsCount(parseInt(e.target.value))} className="w-full bg-background border border-[var(--gold)]/30 px-4 py-3 text-sm focus:border-[var(--gold)] outline-none transition-colors appearance-none">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
           
@@ -274,19 +291,19 @@ function RoomsList({ onSearchStateChange }: { onSearchStateChange?: (s: boolean)
         </div>
       )}
 
-      {hasSearched && !loading && combos.length > 0 && (
+      {hasSearched && !loading && combos.filter(c => !c.room_ids || c.room_ids.every(id => { const r = allRooms.find(ar => ar.id === id); return r ? r.available !== false : true; })).length > 0 && (
         <div className="mb-10 space-y-6">
           <h3 className="text-display text-2xl text-[var(--maroon)] text-center">Recommended Combos</h3>
-          {combos.map((c, i) => (
+          {combos.filter(c => !c.room_ids || c.room_ids.every(id => { const r = allRooms.find(ar => ar.id === id); return r ? r.available !== false : true; })).map((c, i) => (
             <ComboCard key={c.combo_id || c.id || i} combo={c} checkIn={checkIn} checkOut={checkOut} adults={adults} childrenCount={childrenCount} childAges={childAges} />
           ))}
         </div>
       )}
 
-      {allRooms.length > 0 && (
+      {allRooms.filter(r => r.available !== false).length > 0 && (
         <div className="space-y-6">
           <h3 className="text-display text-2xl text-[var(--maroon)] text-center mt-8">Individual Rooms</h3>
-          {allRooms.map((r) => (
+          {allRooms.filter(r => r.available !== false).slice(0, visibleCount).map((r) => (
             <RoomCard 
               key={r.id} 
               room={r} 
@@ -306,6 +323,18 @@ function RoomsList({ onSearchStateChange }: { onSearchStateChange?: (s: boolean)
               }}
             />
           ))}
+          
+          {/* Show More Button */}
+          {allRooms.filter(r => r.available !== false).length > visibleCount && (
+            <div className="flex justify-center mt-10">
+              <button 
+                onClick={() => setVisibleCount(prev => prev + 3)}
+                className="px-8 py-3 border border-[var(--gold)] text-[var(--maroon)] text-xs uppercase tracking-[0.2em] hover:bg-[var(--gold)]/10 transition-colors"
+              >
+                Show More Rooms
+              </button>
+            </div>
+          )}
           <RoomDetailsModal 
             isOpen={selectedRoomId !== null} 
             onClose={() => setSelectedRoomId(null)} 
@@ -397,14 +426,14 @@ function ComboCard({ combo, checkIn, checkOut, adults, childrenCount, childAges 
   }
   const bookUrl = `/book/checkout?${queryParams.toString()}`;
 
-  const totalPrice = combo.pricing?.total_price ?? combo.total_price ?? (combo as any).price ?? 0;
-  const discountedPrice = combo.pricing?.discounted_price ?? combo.discounted_price ?? (combo as any).discounted_price;
+  const totalPrice = getComboPrice(combo);
+  const discountedPrice = getComboDiscountedPrice(combo);
 
   return (
     <article className="group bg-[oklch(0.97_0.03_85)] border border-[var(--gold)] hover:shadow-[var(--shadow-royal)] transition-all duration-500 overflow-hidden">
       <div className="grid lg:grid-cols-[300px_1fr_250px] gap-0">
-        <div className="aspect-[4/3] lg:aspect-auto lg:h-full overflow-hidden">
-          <img src={combo.images?.[0] || "/heritage/Essence/c1.webp"} alt={combo.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        <div className="aspect-[4/3] lg:aspect-auto lg:h-full overflow-hidden bg-parchment flex items-center justify-center">
+          <img src={combo.images?.[0] || "/logo (1).svg"} alt={combo.name} className={`w-full h-full transition-transform duration-700 group-hover:scale-105 ${!combo.images?.[0] ? "object-contain p-8 opacity-60" : "object-cover"}`} />
         </div>
         <div className="p-6">
           <h3 className="text-display text-2xl text-[var(--maroon)] leading-tight">{combo.name}</h3>
@@ -415,13 +444,13 @@ function ComboCard({ combo, checkIn, checkOut, adults, childrenCount, childAges 
           </div>
         </div>
         <div className="p-6 bg-[oklch(0.95_0.03_80)] flex flex-col justify-center items-center text-center border-t lg:border-t-0 lg:border-l border-[var(--gold)]/30">
-          {discountedPrice ? (
+          {discountedPrice !== null ? (
             <>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">₹{totalPrice.toLocaleString()}</p>
-              <div className="mt-1 text-display text-4xl gold-text leading-none">₹{discountedPrice.toLocaleString()}</div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">{formatPrice(totalPrice)}</p>
+              <div className="mt-1 text-display text-4xl gold-text leading-none">{formatPrice(discountedPrice)}</div>
             </>
           ) : (
-            <div className="mt-1 text-display text-4xl gold-text leading-none">₹{totalPrice.toLocaleString()}</div>
+            <div className="mt-1 text-display text-4xl gold-text leading-none">{formatPrice(totalPrice)}</div>
           )}
           <p className="text-[11px] text-muted-foreground mt-2 mb-4">per night · taxes extra</p>
           <Link href={bookUrl} className="w-full text-center px-6 py-3 bg-[var(--maroon)] text-parchment text-xs uppercase tracking-[0.3em] hover:bg-[var(--maroon-deep)] transition-colors">
@@ -459,6 +488,8 @@ function RoomCard({ room, onOpenDetails, checkIn, checkOut, adults, childrenCoun
   
   // Single room direct checkout url
   const bookUrl = `/book/${room.id}?${queryParams.toString()}`;
+
+  const price = getRoomPrice(room);
 
   return (
     <article className={`group bg-card border transition-all duration-500 overflow-hidden ${isSelected ? 'border-[var(--maroon)] shadow-[0_0_15px_rgba(95,24,31,0.2)]' : 'border-[var(--gold)]/30 hover:border-[var(--gold)] hover:shadow-[var(--shadow-royal)]'}`}>
@@ -530,12 +561,12 @@ function RoomCard({ room, onOpenDetails, checkIn, checkOut, adults, childrenCoun
         </div>
 
         <div className="p-6 lg:p-8 bg-gradient-to-br from-[oklch(0.97_0.03_85)] to-[oklch(0.93_0.05_70)] border-t lg:border-t-0 lg:border-l border-[var(--gold)]/30 flex flex-col justify-center text-center lg:text-right">
-          {room.discount > 0 ? (
-            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">₹{Math.round(room.price * (1 + room.discount/100)).toLocaleString()}</p>
-          ) : (
-            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">₹{Math.round(room.price * 1.25).toLocaleString()}</p>
-          )}
-          <div className="mt-1 text-display text-5xl gold-text leading-none">₹{room.price.toLocaleString()}</div>
+          {room.discount > 0 && price !== null ? (
+            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">{formatPrice(Math.round(price * (1 + room.discount/100)))}</p>
+          ) : price !== null ? (
+            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground line-through opacity-70">{formatPrice(Math.round(price * 1.25))}</p>
+          ) : null}
+          <div className="mt-1 text-display text-5xl gold-text leading-none">{formatPrice(price)}</div>
           <p className="text-[11px] text-muted-foreground mt-2">per night · taxes extra</p>
           {room.available === true && (
             <div className="mt-6 px-3 py-2 bg-[oklch(0.45_0.13_150/0.12)] text-[oklch(0.35_0.13_150)] text-[10px] uppercase tracking-[0.2em] border border-[oklch(0.45_0.13_150/0.3)]">✓ Available</div>

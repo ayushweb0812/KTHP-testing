@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import SmoothScroll from "@/components/site/SmoothScroll";
 import CursorTrail from "@/components/site/CursorTrail";
+import { TransitionProvider } from "@/components/transitions/TransitionContext";
 import { HotelJsonLd } from "@/components/seo/HotelJsonLd";
 import {
   SITE_URL,
@@ -13,6 +14,7 @@ import {
   DEFAULT_OG_IMAGE,
 } from "@/lib/seo/site";
 import Script from "next/script";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -122,11 +124,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         )}
         <CursorTrail />
-        <SmoothScroll>
-          <SiteHeader />
-          {children}
-          <SiteFooter />
-        </SmoothScroll>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+          <SmoothScroll>
+            <TransitionProvider>
+              <SiteHeader />
+              {children}
+              <SiteFooter />
+            </TransitionProvider>
+          </SmoothScroll>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

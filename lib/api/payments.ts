@@ -1,63 +1,25 @@
-import { fetchClient } from './apiClient';
+/**
+ * @deprecated This file is a legacy duplicate of payment.ts.
+ * Import from '@/lib/api/payment' instead.
+ * This file is kept temporarily to avoid breaking any remaining imports.
+ */
+export { paymentApi, type PaymentInitiateResponse, type VerifyPaymentPayload, type PaymentStatusResponse } from './payment';
 
-export interface PaymentInitiateResponse {
-  success: boolean;
-  message: string;
-  payment: {
-    order_id: string;
-    booking_id: number;
-    amount: number;
-    amount_paise: number;
-    currency: string;
-    key_id: string;
-    customer: {
-      name: string;
-      email: string;
-      phone: string;
-    };
-    booking_details: {
-      room_id: number;
-      check_in_date: string;
-      check_out_date: string;
-      number_of_nights: number;
-    };
-  };
-}
-
-export interface PaymentVerifyPayload {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-}
-
+// Legacy alias — remove after confirming no remaining callers
 export const paymentsApi = {
-  async initiatePayment(bookingId: number | string): Promise<PaymentInitiateResponse> {
-    return fetchClient<PaymentInitiateResponse>(`/api/payment/bookings/${bookingId}/initiate`, {
-      method: 'POST',
-      requireAuth: true,
-      body: JSON.stringify({}),
-    });
+  /** @deprecated Use paymentApi.initiatePayment */
+  initiatePayment: (bookingId: number | string) => {
+    const { paymentApi } = require('./payment');
+    return paymentApi.initiatePayment(bookingId);
   },
-
-  async verifyPayment(bookingId: number | string, payload: PaymentVerifyPayload): Promise<{ success: boolean; message: string; booking: any }> {
-    return fetchClient<{ success: boolean; message: string; booking: any }>(`/api/payment/bookings/${bookingId}/verify`, {
-      method: 'POST',
-      requireAuth: true,
-      body: JSON.stringify(payload),
-    });
+  /** @deprecated Use paymentApi.verifyPayment */
+  verifyPayment: (bookingId: number | string, payload: unknown) => {
+    const { paymentApi } = require('./payment');
+    return paymentApi.verifyPayment(bookingId, payload);
   },
-
-  async checkPaymentStatus(bookingId: number | string): Promise<{
-    success: boolean;
-    payment_status: string;
-    booking_status: string;
-    amount: number;
-    payment_id: string;
-    payment_order_id: string;
-  }> {
-    return fetchClient<any>(`/api/payment/bookings/${bookingId}/status`, {
-      method: 'GET',
-      requireAuth: true,
-    });
-  }
+  /** @deprecated Use paymentApi.checkPaymentStatus */
+  checkPaymentStatus: (bookingId: number | string) => {
+    const { paymentApi } = require('./payment');
+    return paymentApi.checkPaymentStatus(bookingId);
+  },
 };

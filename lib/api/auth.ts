@@ -12,6 +12,8 @@ export interface User {
   address: string;
   country: string;
   zipcode: string;
+  state?: string;
+  preferred_language?: string;
   profile_picture: string;
   google_id: string;
   last_login: string;
