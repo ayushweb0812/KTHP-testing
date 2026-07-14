@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { TransitionLink as Link } from "@/components/site/TransitionLink";
 import { useRouter } from 'next/navigation';
 import { useTransition } from '@/components/transitions/TransitionContext';
@@ -10,7 +10,7 @@ import { GoogleAuthWrapper } from '@/components/auth/GoogleAuthWrapper';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { startTransition } = useTransition();
+  const { beginPageTransition } = useTransition();
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const isAuthenticating = useRef(false);
 
@@ -37,10 +37,10 @@ export default function LoginPage() {
         
         if (redirectUrl && redirectUrl.startsWith('/')) {
           sessionStorage.removeItem('auth_return_url');
-          startTransition();
+          beginPageTransition();
           router.push(redirectUrl);
         } else {
-          startTransition();
+          beginPageTransition();
           router.push('/profile/personal-details');
         }
       } else {

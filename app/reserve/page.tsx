@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import ReserveClient from "@/components/site/ReserveClient";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { PageJsonLd } from "@/components/seo/PageJsonLd";
@@ -19,7 +20,9 @@ export default function ReservePage() {
   return (
     <>
       <PageJsonLd schemas={reservePageSchemas()} />
-      <ReserveClient />
+      <Suspense fallback={null}>
+        <ReserveClient />
+      </Suspense>
     </>
   );
 }

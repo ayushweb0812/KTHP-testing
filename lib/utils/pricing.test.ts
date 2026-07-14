@@ -1,4 +1,5 @@
 import { getComboPrice, getComboDiscountedPrice, getRoomPrice, formatPrice } from "./pricing";
+import { describe, it, expect } from "@jest/globals";
 
 describe("Pricing Utility", () => {
   describe("getComboPrice", () => {

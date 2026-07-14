@@ -15,7 +15,7 @@ export default function ProfileShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { startTransition } = useTransition();
+  const { beginPageTransition } = useTransition();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -193,7 +193,7 @@ export default function ProfileShell({
                             <div>
                               <h4 className="font-serif text-sm text-[var(--foreground)]">{roomName}</h4>
                               <p className="text-[10px] text-[var(--muted-foreground)] mt-1">{formatShortDate(booking.check_in_date)} - {formatShortDate(booking.check_out_date)}</p>
-                              <Link href="/profile/trips" onClick={startTransition} className="text-[10px] text-[var(--gold)] mt-2 inline-block">View Stay &rarr;</Link>
+                              <Link href="/profile/trips" onClick={beginPageTransition} className="text-[10px] text-[var(--gold)] mt-2 inline-block">View Stay &rarr;</Link>
                             </div>
                           </div>
                         );

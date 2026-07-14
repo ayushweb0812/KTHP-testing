@@ -6,24 +6,24 @@ import PageTransitionOverlay from "./PageTransitionOverlay";
 
 interface TransitionContextType {
   isTransitioning: boolean;
-  startTransition: () => void;
-  finishTransition: () => void;
+  beginPageTransition: () => void;
+  finishPageTransition: () => void;
 }
 
 const TransitionContext = createContext<TransitionContextType>({
   isTransitioning: false,
-  startTransition: () => {},
-  finishTransition: () => {},
+  beginPageTransition: () => {},
+  finishPageTransition: () => {},
 });
 
 export const useTransition = () => useContext(TransitionContext);
 
-function RouteChangeListener({ finishTransition }: { finishTransition: () => void }) {
+function RouteChangeListener({ finishPageTransition }: { finishPageTransition: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    finishTransition();
+    finishPageTransition();
   }, [pathname, searchParams]);
 
   return null;
@@ -42,7 +42,7 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
     if (failsafeTimeoutRef.current) clearTimeout(failsafeTimeoutRef.current);
   };
 
-  const finishTransition = () => {
+  const finishPageTransition = () => {
     clearTimeouts();
     setIsTransitioning(false);
     setShowLoader(false);
@@ -55,7 +55,7 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const startTransition = () => {
+  const beginPageTransition = () => {
     if (isTransitioning) return; // Prevent multiple concurrent transitions
     
     setIsTransitioning(true);
@@ -77,7 +77,7 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
 
     // Fail-safe to remove loader if navigation hangs (e.g. 8 seconds)
     failsafeTimeoutRef.current = setTimeout(() => {
-      finishTransition();
+      finishPageTransition();
     }, 8000);
   };
 
@@ -86,9 +86,9 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   return (
-    <TransitionContext.Provider value={{ isTransitioning, startTransition, finishTransition }}>
+    <TransitionContext.Provider value={{ isTransitioning, beginPageTransition, finishPageTransition }}>
       <Suspense fallback={null}>
-        <RouteChangeListener finishTransition={finishTransition} />
+        <RouteChangeListener finishPageTransition={finishPageTransition} />
       </Suspense>
 
       <div

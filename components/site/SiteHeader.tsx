@@ -28,7 +28,7 @@ export function SiteHeader() {
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { startTransition } = useTransition();
+  const { beginPageTransition } = useTransition();
 
   const pathname = usePathname();
 
@@ -80,7 +80,7 @@ export function SiteHeader() {
         <div className="mx-auto max-w-[1400px] px-6 lg:px-12 h-20 flex items-center justify-between">
           
           {/* Logo Section */}
-          <Link href="/" onClick={startTransition} className="flex items-center gap-4 group">
+          <Link href="/" onClick={beginPageTransition} className="flex items-center gap-4 group">
             <img src="/logo (1).svg" alt="Kila The Heritage Palace" className="h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-700" />
             <div className="flex flex-col justify-center mt-1">
               <div className="text-[var(--foreground)] text-display text-2xl tracking-[0.2em] leading-none mb-1">KILA</div>
@@ -96,7 +96,7 @@ export function SiteHeader() {
               <Link
                 key={n.href}
                 href={n.href}
-                onClick={startTransition}
+                onClick={beginPageTransition}
                 className={`text-[10px] tracking-[0.2em] transition-colors duration-500 uppercase ${
                   pathname === n.href || (pathname?.startsWith('/reserve') && n.href === '/reserve')
                     ? "text-[var(--foreground)] font-medium"
@@ -129,12 +129,12 @@ export function SiteHeader() {
 
                 {profileDropdownOpen && (
                   <div className="absolute right-0 top-[calc(100%+12px)] w-56 bg-white/80 backdrop-blur-md rounded-2xl shadow-[0_8px_32px_rgba(31,38,135,0.07)] border border-[var(--gold)]/20 py-2 animate-fade-up z-50">
-                    <Link href="/profile" onClick={() => { setProfileDropdownOpen(false); startTransition(); }} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--gold)]/10 text-[13px] text-[var(--foreground)] transition-colors mx-2 rounded-lg font-medium group">
+                    <Link href="/profile" onClick={() => { setProfileDropdownOpen(false); beginPageTransition(); }} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--gold)]/10 text-[13px] text-[var(--foreground)] transition-colors mx-2 rounded-lg font-medium group">
                       <svg className="w-[18px] h-[18px] text-[var(--muted-foreground)] group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                       My Profile
                     </Link>
                     
-                    <Link href="/profile/trips" onClick={() => { setProfileDropdownOpen(false); startTransition(); }} className="flex items-center justify-between px-4 py-2.5 hover:bg-[var(--gold)]/10 text-[13px] text-[var(--foreground)] transition-colors mx-2 rounded-lg font-medium group">
+                    <Link href="/profile/trips" onClick={() => { setProfileDropdownOpen(false); beginPageTransition(); }} className="flex items-center justify-between px-4 py-2.5 hover:bg-[var(--gold)]/10 text-[13px] text-[var(--foreground)] transition-colors mx-2 rounded-lg font-medium group">
                       <div className="flex items-center gap-3">
                         <svg className="w-[18px] h-[18px] text-[var(--muted-foreground)] group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                         My Booking
@@ -208,7 +208,7 @@ export function SiteHeader() {
                 <Link
                   key={n.href}
                   href={n.href}
-                  onClick={() => { setOpen(false); startTransition(); }}
+                  onClick={() => { setOpen(false); beginPageTransition(); }}
                   className="text-[var(--foreground)] text-xs uppercase tracking-widest"
                 >
                   {n.label}
@@ -218,7 +218,7 @@ export function SiteHeader() {
               {isAuthenticated ? (
                 <Link
                   href="/profile"
-                  onClick={() => { setOpen(false); startTransition(); }}
+                  onClick={() => { setOpen(false); beginPageTransition(); }}
                   className="px-6 py-3 bg-[var(--gold)] text-[var(--background)] text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

@@ -25,7 +25,7 @@ function daysBetween(dateStr: string): number {
 export default function PaymentPage() {
   const router = useRouter();
   const params = useParams();
-  const { startTransition } = useTransition();
+  const { beginPageTransition } = useTransition();
   const bookingId = params.bookingId as string;
 
   /* ─── data ───────────────────────────────────── */
@@ -81,7 +81,7 @@ export default function PaymentPage() {
     const token = getAccessToken();
     if (!token) { 
       const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '';
-      startTransition();
+      beginPageTransition();
       router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
       return; 
     }
@@ -236,14 +236,14 @@ export default function PaymentPage() {
               if (verifyRes.success) {
                 pushGtmEvent("booking_complete", { booking_id: booking.id });
                 setShowSuccess(true);
-                setTimeout(() => { startTransition(); router.push("/profile"); }, 3500);
+                setTimeout(() => { beginPageTransition(); router.push("/profile"); }, 3500);
               } else {
                 setPaymentError("Payment verification failed. Please check your profile.");
-                setTimeout(() => { startTransition(); router.push("/profile"); }, 2000);
+                setTimeout(() => { beginPageTransition(); router.push("/profile"); }, 2000);
               }
             } catch {
               setPaymentError("Error verifying payment.");
-              setTimeout(() => { startTransition(); router.push("/profile"); }, 2000);
+              setTimeout(() => { beginPageTransition(); router.push("/profile"); }, 2000);
             }
           },
           theme: { color: "#5f181f" },

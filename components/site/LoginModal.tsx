@@ -17,7 +17,7 @@ interface LoginModalProps {
 
 export function LoginModal({ isOpen, onClose, returnUrl = '/profile/personal-details' }: LoginModalProps) {
   const router = useRouter();
-  const { startTransition } = useTransition();
+  const { beginPageTransition } = useTransition();
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
   
@@ -56,7 +56,7 @@ export function LoginModal({ isOpen, onClose, returnUrl = '/profile/personal-det
         }
         
         onClose();
-        startTransition();
+        beginPageTransition();
         
         if (targetUrl && targetUrl.startsWith('/')) {
           sessionStorage.removeItem('auth_return_url');

@@ -46,7 +46,7 @@ function nightsBetween(checkIn: string, checkOut: string): number {
 export default function BookRoomPage() {
   const { roomId } = useParams();
   const router = useRouter();
-  const { startTransition } = useTransition();
+  const { beginPageTransition } = useTransition();
 
   /* ─── room data ─────────────────────────────── */
   const [room, setRoom] = useState<Room | null>(null);
@@ -137,9 +137,8 @@ export default function BookRoomPage() {
         rooms: requestedRooms, roomsCount
       };
       sessionStorage.setItem('auth_booking_context', JSON.stringify(ctx));
-      startTransition(() => {
-        router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
-      });
+      beginPageTransition();
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`); 
       return; 
     }
 
@@ -397,14 +396,14 @@ export default function BookRoomPage() {
               if (verifyRes.success) {
                 pushGtmEvent("booking_complete", { booking_id: bookingId });
                 setShowSuccess(true);
-                setTimeout(() => { startTransition(); router.push("/profile"); }, 3500);
+                setTimeout(() => { beginPageTransition(); router.push("/profile"); }, 3500);
               } else {
                 setSubmitError("Payment verification failed. Check your profile.");
-                setTimeout(() => { startTransition(); router.push("/profile"); }, 2000);
+                setTimeout(() => { beginPageTransition(); router.push("/profile"); }, 2000);
               }
             } catch {
               setSubmitError("Error verifying payment.");
-              setTimeout(() => { startTransition(); router.push("/profile"); }, 2000);
+              setTimeout(() => { beginPageTransition(); router.push("/profile"); }, 2000);
             }
           },
           theme: { color: "#5f181f" },

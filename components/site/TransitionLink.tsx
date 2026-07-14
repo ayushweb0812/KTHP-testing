@@ -15,7 +15,7 @@ interface TransitionLinkProps extends Omit<LinkProps, "href"> {
 
 export function TransitionLink({ children, href, className, onClick, ...props }: TransitionLinkProps) {
   const pathname = usePathname();
-  const { startTransition } = useTransition();
+  const { beginPageTransition } = useTransition();
 
   const handleTransition = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // If it's a modifier key or right click, let the browser handle it natively
@@ -41,7 +41,7 @@ export function TransitionLink({ children, href, className, onClick, ...props }:
     }
 
     // Trigger the new global transition
-    startTransition();
+    beginPageTransition();
   };
 
   return (
