@@ -23,6 +23,10 @@ function RouteChangeListener({ finishPageTransition }: { finishPageTransition: (
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Force scroll to top when pathname changes, using timeout to wait for DOM/Next.js updates
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 10);
     finishPageTransition();
   }, [pathname, searchParams]);
 
